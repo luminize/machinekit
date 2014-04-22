@@ -29,7 +29,7 @@ loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[TRAJ]AX
 # load low-level drivers
 loadrt hal_bb_gpio output_pins=107,126,217,218,224,226 input_pins=108,109,110,114,117,118
 loadrt [PRUCONF](DRIVER) prucode=$(LINUXCNC_HOME)/[PRUCONF](PRUBIN) [PRUCONF](CONFIG)
-loadrt pid num_chan=2
+loadrt pid num_chan=3
 loadrt limit1 count=2
 
 
@@ -39,18 +39,19 @@ loadrt limit1 count=2
 loadusr -Wn Therm ../ReadTemp.py -n Therm --num_chan 2 -t 1 1 -a 4 5
 
 #used for comparing temperature set value with actual for waiting on temperature
-loadrt wcomp count=1
+loadrt wcomp count=2
 loadrt sum2 count=4
 loadrt mult2 count=5
 loadrt abs count=6
 loadrt hypot count=2
 loadrt invert count=1
+loadrt mux2 count=1
 loadrt mux4 count=1
 loadrt oneshot count=1
 loadrt ddt count=4
 loadrt lincurve count=1 personality=3
 loadrt lineardeltajointscartesian count=1
-
+loadrt conv_s32_float count=1
 
 # ################################################
 # THREADS
@@ -62,13 +63,14 @@ addf motion-command-handler               servo-thread
 addf motion-controller                    servo-thread
 addf pid.0.do-pid-calcs                   servo-thread
 addf pid.1.do-pid-calcs                   servo-thread
-#addf pid.2.do-pid-calcs                   servo-thread
+addf pid.2.do-pid-calcs                   servo-thread
 addf limit1.0                             servo-thread
 addf limit1.1                             servo-thread
 addf [PRUCONF](DRIVER).update             servo-thread
 addf bb_gpio.write                        servo-thread
 
 addf wcomp.0                              servo-thread
+addf wcomp.1                              servo-thread
 addf sum2.0                               servo-thread
 addf sum2.1                               servo-thread
 addf sum2.2				  servo-thread
@@ -87,6 +89,7 @@ addf abs.5			          servo-thread
 #addf hypot.0				  servo-thread
 addf hypot.1				  servo-thread
 addf invert.0				  servo-thread
+addf mux2.0				  servo-thread
 addf mux4.0				  servo-thread
 addf oneshot.0				  servo-thread
 addf ddt.0				  servo-thread
@@ -95,6 +98,8 @@ addf ddt.2				  servo-thread
 addf ddt.3				  servo-thread
 addf lincurve.0				  servo-thread
 addf lineardeltajointscartesian.0	  servo-thread
+addf conv-s32-float.0			  servo-thread
+
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
 # ######################################################
@@ -318,7 +323,7 @@ setp oneshot.0.retriggerable 1
 #by setting the width, the automatic retract/precharge can be disabled
 net trigger-time motion.analog-out-04 => oneshot.0.width
 
-#get readout from the current motion pin
+#get readout from the current motion pin, used in PID loop extruder
 net current-motion-type motion.current-motion
 
 # these are used for a small offset in velocity during acceleration (buildup pressure inside
@@ -418,16 +423,11 @@ newsig add_temp_max               float
 newsig e0_temp_within_range       bit
 
 #set boundaries with sum2 +1 and -1 of the wanted temperature
-sets add_temp_max 1
-sets sub_temp_min -1
-
 net e0.temp.set  => sum2.0.in0
 setp sum2.0.in1 2
-#net add_temp_max.out => sum2.0.in1
 
 net e0.temp.set  => sum2.1.in0
 setp sum2.1.in1 -2
-#net sub_temp_min.out => sum2.1.in1
 
 #the values will be given to the wcomp.0 function
 net minboundary sum2.1.out => wcomp.0.min
@@ -436,8 +436,6 @@ net e0.temp.meas => wcomp.0.in
 
 #the output of wcomp.0 will say if measured temperature is in range of set value
 #this needs to be coupled to a digital input for M66 readout
-#net e0_temp_within_range.in <= wcomp.0.out
-#net e0_temp_within_range.out => motion.digital-in-00
 net e0_temp_within_range wcomp.0.out => motion.digital-in-00
 
 # no longer J3 E1 Heater PRU1.out0
@@ -490,6 +488,27 @@ net bed.heaterl => hal_pru_generic.pwmgen.00.out.02.value
 # PWM mimics hm2 implementation, which generates output for negative values
 setp limit1.1.min 0
 
+# if current motion type is Feed or Arc (2 or 3) then extruding bias
+# see github.com/machinekit/machinekit/pull/165
+# else take the bias for pause (otherwise temp will be too high)
+setp wcomp.1.min 1
+setp wcomp.1.max 4
+
+net current-motion-type => conv-s32-float.0.in
+net motion-type-float conv-s32-float.0.out => wcomp.1.in
+
+net is-there-movement wcomp.1.out => mux2.0.sel
+# true means Yes! that means mux2.0.out follows mux2.0.in1
+# because the temperature will be too high in a pause, thus the
+# wcomp for M66 to react will be off when printing a second part
+# could be done with a lincurve, depending on the actual speed,
+# but it's not _that_ critical.
+
+#movement bias
+setp mux2.0.in1 0.55
+#pause bias
+setp mux2.0.in0 0.48
+
 # PID Parameters for adjusting temperature control
 # Extruder
 #setp pid.0.FF0      0  
@@ -499,7 +518,8 @@ setp pid.0.Pgain  0.022
 setp pid.0.Igain  0.004
 setp pid.0.Dgain  0.02
 setp pid.0.maxerrorI 1.0
-setp pid.0.bias    0.55 
+#setp pid.0.bias    0.55
+net extruder-1-bias mux2.0.out => pid.0.bias
 setp pid.0.enable   1
 
 # Bed
