@@ -90,8 +90,8 @@ addf mux4.0				  servo-thread
 addf oneshot.0				  servo-thread
 addf ddt.0				  servo-thread
 addf lincurve.0				  servo-thread
-addf pepper.update			  servo thread
-#addf clarkeinv.0			  servo thread
+addf pepper.update			  servo-thread
+#addf clarkeinv.0			  servo-thread
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
 # ######################################################
@@ -367,17 +367,16 @@ sets emcmot.04.enable FALSE
 net emcmot.04.enable <= axis.4.amp-enable-out 
 net emcmot.04.enable => [PRUCONF](DRIVER).stepgen.04.enable
 
-
 # position command and feedback
-#net emcmot.04.pos-cmd <= axis.4.motor-pos-cmd
-#net emcmot.04.pos-cmd => [PRUCONF](DRIVER).stepgen.04.position-cmd
+net emcmot.04.pos-cmd <= axis.4.motor-pos-cmd
+net emcmot.04.pos-cmd => [PRUCONF](DRIVER).stepgen.04.position-cmd
 #net [PRUCONF](DRIVER).stepgen.04.position-cmd slew.pos
 
-#net motor.04.pos-fb <= [PRUCONF](DRIVER).stepgen.04.position-fb
+net motor.04.pos-fb <= [PRUCONF](DRIVER).stepgen.04.position-fb
 #temporary commented out for testing with leds
-#net motor.04.pos-fb => axis.4.motor-pos-fb
+net motor.04.pos-fb => axis.4.motor-pos-fb
 
-net slew-angle motion.analog-out-05 => [PRUCONF](DRIVER).stepgen.04.position-cmd
+#net slew-angle motion.analog-out-05 => [PRUCONF](DRIVER).stepgen.04.position-cmd
 
 # timing parameters
 setp [PRUCONF](DRIVER).stepgen.04.dirsetup        [AXIS_4]DIRSETUP
@@ -417,9 +416,9 @@ net tool-change-loop iocontrol.0.tool-change => iocontrol.0.tool-changed
 #
 # Link pepper component as last item in io_enable chain
 #
-#net estop-loop => pepper.io-ena.in
-#net io-enable pepper.io-ena.out => bb_gpio.p8.out-07 
-#setp bb_gpio.p8.out-07.invert 1
+net estop-loop => pepper.io-ena.in
+net io-enable pepper.io-ena.out => bb_gpio.p8.out-07 
+setp bb_gpio.p8.out-07.invert 1
 
 # feed stepper enables to pepper component
 net emcmot.00.enable => pepper.stepper-ena.0.in
@@ -446,8 +445,8 @@ setp bb_gpio.p9.out-24.invert 1
 
 # Machine power (BeBoPr Enable)
 # Enable tied to system Reset_n line (P9.10)
-net estop-loop => bb_gpio.p8.out-07
-setp bb_gpio.p8.out-07.invert 1
+#net estop-loop => bb_gpio.p8.out-07
+#setp bb_gpio.p8.out-07.invert 1
 
 
 # ##################################################
