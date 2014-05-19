@@ -51,7 +51,7 @@ loadrt invert count=1
 loadrt mux4 count=1
 loadrt oneshot count=1
 loadrt ddt count=1
-loadrt lincurve count=1 personality=2
+loadrt lincurve count=1 personality=3
 loadrt clarkeinv count=1
 
 
@@ -91,7 +91,7 @@ addf oneshot.0				  servo-thread
 addf ddt.0				  servo-thread
 addf lincurve.0				  servo-thread
 addf pepper.update			  servo-thread
-#addf clarkeinv.0			  servo-thread
+addf clarkeinv.0			  servo-thread
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
 # ######################################################
@@ -315,10 +315,12 @@ net current-motion-type motion.current-motion
 
 # these are used for a small offset in velocity during acceleration (buildup pressure inside
 # the nozzle because of the current speed. Take the maximum accel you've specified in .ini
-setp lincurve.0.x-val-00 -2000
-setp lincurve.0.x-val-01 2000
-setp lincurve.0.y-val-00 -360
-setp lincurve.0.y-val-01 360
+setp lincurve.0.y-val-00 -5.5
+setp lincurve.0.y-val-01 0
+setp lincurve.0.y-val-02 5.5
+setp lincurve.0.x-val-00 -18
+setp lincurve.0.x-val-01 0
+setp lincurve.0.x-val-02 18
 
 # get the extruder speed into sum2.2 and ddt
 net extruder-speed mux4.0.out sum2.2.in0 ddt.0.in
@@ -392,9 +394,9 @@ setp [PRUCONF](DRIVER).stepgen.04.maxaccel        [AXIS_4]STEPGEN_MAX_ACC
 
 #setp [PRUCONF](DRIVER).stepgen.04.step_type       0
 # P9.18 GPIO0_4
-setp [PRUCONF](DRIVER).stepgen.04.steppin          0x24
+setp [PRUCONF](DRIVER).stepgen.04.steppin          0x25
 # P9.17 GPIO0_5
-setp [PRUCONF](DRIVER).stepgen.04.dirpin           0x25
+setp [PRUCONF](DRIVER).stepgen.04.dirpin           0x2E
 
 
 # ##################################################
@@ -428,9 +430,13 @@ net emcmot.03.enable => pepper.stepper-ena.3.in
 net emcmot.04.enable => pepper.stepper-ena.4.in
 
 # feed resulting enable outputs to bebopr
-net ena1 pepper.enable-sck.out => bb_gpio.p9.out-26
+#net ena1 pepper.enable-sck.out => bb_gpio.p9.out-26
+#because of my R0 bridge, and probably wiring to pins in bb_gpio for newer revisions
+#the actual J5.15 pin of the pepper is reachable at bb_gpio.p9.out-18
+net ena1 pepper.enable-sck.out => bb_gpio.p9.out-18
 net ena2 pepper.spindle-mosi.out => bb_gpio.p9.out-24
-setp bb_gpio.p9.out-26.invert 1
+#setp bb_gpio.p9.out-26.invert 1
+setp bb_gpio.p9.out-18.invert 1
 setp bb_gpio.p9.out-24.invert 1
 
 # Axis enable signals
