@@ -1,0 +1,31 @@
+component anglexy "Calculation of angle from vector in x-y plane";
+description """This calculation calculates the angle that the combined
+speed of x and y makes with the x-axis. It uses the atan2 function and because
+that results in an undefined state if x and y are both 0 it remembers its
+last angle if that situation arises""";
+pin in float x_comp "X component of vector";
+pin in float y_comp "Y component of vector";
+pin in float length "Length under which the calculation is not done";
+pin out float angle_rad "Angle in radians";
+pin out float angle_deg "Angle in degrees";
+variable float prev_angle ;
+
+function _ fp "Update the angle";
+license "GPL";
+author "Bas de Bruijn";
+;;
+#include <rtapi_math.h>
+#define pi (3.14159265) 
+
+FUNCTION(_) {
+    if (sqrt(x_comp*x_comp + y_comp*y_comp) < length)
+	{
+	angle_rad = prev_angle;
+	}
+	else 
+	{
+	angle_rad = atan2(y_comp,x_comp);
+	}
+    angle_deg = ((180/pi)*angle_rad);
+    prev_angle = angle_rad;
+}

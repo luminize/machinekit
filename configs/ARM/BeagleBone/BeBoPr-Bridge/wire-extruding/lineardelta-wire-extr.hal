@@ -43,16 +43,17 @@ loadusr -Wn Therm ../ReadTemp.py -n Therm --num_chan 2 -t 1 1 -a 4 5
 
 #used for comparing temperature set value with actual for waiting on temperature
 loadrt wcomp count=1
-loadrt sum2 count=3
+loadrt sum2 count=4
 loadrt mult2 count=5
-loadrt abs count=3
-loadrt hypot count=1
+loadrt abs count=6
+loadrt hypot count=2
 loadrt invert count=1
-loadrt mux4 count=1
+loadrt mux4 count=2
 loadrt oneshot count=1
-loadrt ddt count=1
+loadrt ddt count=4
 loadrt lincurve count=1 personality=3
-loadrt clarkeinv count=1
+loadrt anglexy count=1
+loadrt lineardeltajointscartesian count=1
 
 
 
@@ -76,6 +77,7 @@ addf wcomp.0                              servo-thread
 addf sum2.0                               servo-thread
 addf sum2.1                               servo-thread
 addf sum2.2				  servo-thread			  
+addf sum2.3				  servo-thread		
 addf mult2.0                              servo-thread
 addf mult2.1				  servo-thread
 addf mult2.2				  servo-thread
@@ -84,14 +86,23 @@ addf mult2.4				  servo-thread
 addf abs.0				  servo-thread
 addf abs.1			  	  servo-thread
 addf abs.2			          servo-thread
+addf abs.3			          servo-thread
+addf abs.4			          servo-thread
+addf abs.5			          servo-thread
 addf hypot.0				  servo-thread
+addf hypot.1				  servo-thread
 addf invert.0				  servo-thread
 addf mux4.0				  servo-thread
 addf oneshot.0				  servo-thread
+addf mux4.1				  servo-thread
 addf ddt.0				  servo-thread
+addf ddt.1				  servo-thread
+addf ddt.2				  servo-thread
+addf ddt.3				  servo-thread
 addf lincurve.0				  servo-thread
 addf pepper.update			  servo-thread
-addf clarkeinv.0			  servo-thread
+addf anglexy.0				  servo-thread
+addf lineardeltajointscartesian.0	  servo-thread
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
 # ######################################################
@@ -247,24 +258,41 @@ net emcmot.03.enable => [PRUCONF](DRIVER).stepgen.03.enable
 ## PI = 3.14159265, but 1/4*PI is 0.7854
 #sets dia-filament 2.85
 
-
-
 #here i pass the value of the analog output from M67 E1 Q.. or M68 E1 Q.. to the multiplicator
 net line-width  motion.analog-out-02 => mult2.0.in0
 net line-height motion.analog-out-03 => mult2.0.in1
-
 net line-cross-section mult2.0.out => mult2.1.in1
 
 #take all the actual speeds from the axes and calculate resulting speed.
-net xvel axis.0.joint-vel-cmd => abs.0.in clarkeinv.0.x
-net xvel-abs abs.0.out => hypot.0.in0
-net yvel axis.1.joint-vel-cmd => abs.1.in clarkeinv.0.y
-net yvel-abs abs.1.out => hypot.0.in1
-net zvel axis.2.joint-vel-cmd => abs.2.in
-net zvel-abs abs.2.out => hypot.0.in2
+net Cvel axis.0.joint-vel-cmd => abs.0.in
+net Cvel-abs abs.0.out => hypot.0.in0
+net Avel axis.1.joint-vel-cmd => abs.1.in
+net Avel-abs abs.1.out => hypot.0.in1
+net Bvel axis.2.joint-vel-cmd => abs.2.in
+net Bvel-abs abs.2.out => hypot.0.in2
+
+net joint-0-pos axis.0.joint-pos-cmd lineardeltajointscartesian.0.C-pos
+net joint-1-pos axis.1.joint-pos-cmd lineardeltajointscartesian.0.A-pos
+net joint-2-pos axis.2.joint-pos-cmd lineardeltajointscartesian.0.B-pos
+setp lineardeltajointscartesian.0.ROD [MACHINE]CF_ROD
+setp lineardeltajointscartesian.0.RAD [MACHINE]DELTA_R
+
+net xpos lineardeltajointscartesian.0.x-pos => ddt.1.in
+net xvel ddt.1.out abs.3.in
+net xvel-abs abs.3.out => hypot.1.in0
+
+net ypos lineardeltajointscartesian.0.y-pos => ddt.2.in
+net yvel ddt.2.out abs.4.in
+net yvel-abs abs.4.out => hypot.1.in1
+
+net zpos lineardeltajointscartesian.0.z-pos => ddt.3.in
+net zvel ddt.3.out abs.5.in
+net zvel-abs abs.5.out => hypot.1.in2
+
+#net cartesian-nozzle-speed hypot.1.out
 
 #multiply area with speed and we get discharge (mm^3 per second)
-net nozzle-vel hypot.0.out => mult2.1.in0
+net nozzle-vel-cartesian hypot.1.out => mult2.1.in0
 net nozzle-discharge mult2.1.out => mult2.2.in0
 
 #calaulate filament cross section area
@@ -315,12 +343,12 @@ net current-motion-type motion.current-motion
 
 # these are used for a small offset in velocity during acceleration (buildup pressure inside
 # the nozzle because of the current speed. Take the maximum accel you've specified in .ini
-setp lincurve.0.y-val-00 -5.5
+setp lincurve.0.y-val-00 -4.2
 setp lincurve.0.y-val-01 0
-setp lincurve.0.y-val-02 5.5
-setp lincurve.0.x-val-00 -18
+setp lincurve.0.y-val-02 4.2
+setp lincurve.0.x-val-00 -20
 setp lincurve.0.x-val-01 0
-setp lincurve.0.x-val-02 18
+setp lincurve.0.x-val-02 20
 
 # get the extruder speed into sum2.2 and ddt
 net extruder-speed mux4.0.out sum2.2.in0 ddt.0.in
@@ -371,15 +399,30 @@ net emcmot.04.enable => [PRUCONF](DRIVER).stepgen.04.enable
 
 # position command and feedback
 net emcmot.04.pos-cmd <= axis.4.motor-pos-cmd
-net emcmot.04.pos-cmd => [PRUCONF](DRIVER).stepgen.04.position-cmd
+#net emcmot.04.pos-cmd => [PRUCONF](DRIVER).stepgen.04.position-cmd
 #net [PRUCONF](DRIVER).stepgen.04.position-cmd slew.pos
 
 net motor.04.pos-fb <= [PRUCONF](DRIVER).stepgen.04.position-fb
 #temporary commented out for testing with leds
-net motor.04.pos-fb => axis.4.motor-pos-fb
+#net motor.04.pos-fb => axis.4.motor-pos-fb
 
-#net slew-angle motion.analog-out-05 => [PRUCONF](DRIVER).stepgen.04.position-cmd
 
+net xvel anglexy.0.x-comp
+net yvel anglexy.0.y-comp
+setp anglexy.0.length 0.0001
+
+net enable_slew motion.digital-out-03 mux4.1.sel1
+setp mux4.1.sel0 0
+setp mux4.1.in0 0
+setp mux4.1.in1 0
+net angle-in-degree anglexy.0.angle-deg => mux4.1.in2
+setp mux4.1.in3 0
+
+net slew-angle mux4.1.out sum2.3.in0 
+setp sum2.3.in1 0
+
+net slew-adjustmened sum2.3.out => [PRUCONF](DRIVER).stepgen.04.position-cmd
+ 
 # timing parameters
 setp [PRUCONF](DRIVER).stepgen.04.dirsetup        [AXIS_4]DIRSETUP
 setp [PRUCONF](DRIVER).stepgen.04.dirhold         [AXIS_4]DIRHOLD
@@ -398,7 +441,11 @@ setp [PRUCONF](DRIVER).stepgen.04.steppin          0x25
 # P9.17 GPIO0_5
 setp [PRUCONF](DRIVER).stepgen.04.dirpin           0x2E
 
-
+#[PRUCONF]
+#DRIVER=hal_pru_generic
+#CONFIG=pru=1 num_stepgens=5 num_pwmgens=3
+#PRUBIN=rtlib/xenomai/pru_generic.bin
+#halcmd setp hal_pru_generic.stepgen.04.position-scale 10
 # ##################################################
 
 # ##################################################
