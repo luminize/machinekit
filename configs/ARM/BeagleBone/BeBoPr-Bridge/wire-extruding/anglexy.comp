@@ -8,7 +8,8 @@ pin in float y_comp "Y component of vector";
 pin in float length "Length under which the calculation is not done";
 pin out float angle_rad "Angle in radians";
 pin out float angle_deg "Angle in degrees";
-variable float prev_angle ;
+variable float prev_angle;
+variable float revolutions = 0;
 
 function _ fp "Update the angle";
 license "GPL";
@@ -27,5 +28,13 @@ FUNCTION(_) {
 	angle_rad = atan2(y_comp,x_comp);
 	}
     angle_deg = ((180/pi)*angle_rad);
+    if (angle_deg < 0)
+	{
+	angle_deg += 360;
+	}
+    if (angle_deg > (360-length))
+	{
+	angle_deg = 0;
+	}
     prev_angle = angle_rad;
 }

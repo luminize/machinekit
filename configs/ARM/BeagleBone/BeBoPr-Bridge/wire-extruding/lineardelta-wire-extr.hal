@@ -44,16 +44,17 @@ loadusr -Wn Therm ../ReadTemp.py -n Therm --num_chan 2 -t 1 1 -a 4 5
 #used for comparing temperature set value with actual for waiting on temperature
 loadrt wcomp count=1
 loadrt sum2 count=4
-loadrt mult2 count=5
+loadrt mult2 count=6
 loadrt abs count=6
 loadrt hypot count=2
-loadrt invert count=1
+loadrt invert count=2
 loadrt mux4 count=2
 loadrt oneshot count=1
 loadrt ddt count=4
 loadrt lincurve count=1 personality=3
 loadrt anglexy count=1
 loadrt lineardeltajointscartesian count=1
+loadrt orient count=1
 
 
 
@@ -84,6 +85,7 @@ addf mult2.2				  servo-thread
 addf mult2.3				  servo-thread
 addf mult2.4				  servo-thread
 addf abs.0				  servo-thread
+addf mult2.5				  servo-thread
 addf abs.1			  	  servo-thread
 addf abs.2			          servo-thread
 addf abs.3			          servo-thread
@@ -92,6 +94,7 @@ addf abs.5			          servo-thread
 addf hypot.0				  servo-thread
 addf hypot.1				  servo-thread
 addf invert.0				  servo-thread
+addf invert.1				  servo-thread
 addf mux4.0				  servo-thread
 addf oneshot.0				  servo-thread
 addf mux4.1				  servo-thread
@@ -103,6 +106,7 @@ addf lincurve.0				  servo-thread
 addf pepper.update			  servo-thread
 addf anglexy.0				  servo-thread
 addf lineardeltajointscartesian.0	  servo-thread
+addf orient.0				  servo-thread
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
 # ######################################################
@@ -398,11 +402,11 @@ net emcmot.04.enable <= axis.4.amp-enable-out
 net emcmot.04.enable => [PRUCONF](DRIVER).stepgen.04.enable
 
 # position command and feedback
-net emcmot.04.pos-cmd <= axis.4.motor-pos-cmd
+#net emcmot.04.pos-cmd <= axis.4.motor-pos-cmd
 #net emcmot.04.pos-cmd => [PRUCONF](DRIVER).stepgen.04.position-cmd
 #net [PRUCONF](DRIVER).stepgen.04.position-cmd slew.pos
 
-net motor.04.pos-fb <= [PRUCONF](DRIVER).stepgen.04.position-fb
+#net motor.04.pos-fb <= [PRUCONF](DRIVER).stepgen.04.position-fb
 #temporary commented out for testing with leds
 #net motor.04.pos-fb => axis.4.motor-pos-fb
 
@@ -416,12 +420,27 @@ setp mux4.1.sel0 0
 setp mux4.1.in0 0
 setp mux4.1.in1 0
 net angle-in-degree anglexy.0.angle-deg => mux4.1.in2
+#offset in orientation manually done with terminal
 setp mux4.1.in3 0
 
 net slew-angle mux4.1.out sum2.3.in0 
 setp sum2.3.in1 0
 
-net slew-adjustmened sum2.3.out => [PRUCONF](DRIVER).stepgen.04.position-cmd
+setp orient.0.enable 1 #enable angular output
+setp orient.0.mode 0   #rotate shortest move
+
+setp invert.1.in 360
+net divide-turns invert.1.out mult2.5.in0
+#net slew-actual-position axis.4.joint-pos-fb mult2.5.in1
+
+#emcmot.04.pos-cmd
+net slew-number-of-rotations axis.4.joint-pos-fb orient.0.position
+#net slew-number-of-rotations mult2.5.out orient.0.position
+net slew-position-angle sum2.3.out orient.0.angle [PRUCONF](DRIVER).stepgen.04.position-cmd
+#net slew-rotation orient.0.command [PRUCONF](DRIVER).stepgen.04.position-cmd
+
+
+#net slew-adjusted sum2.3.out => [PRUCONF](DRIVER).stepgen.04.position-cmd
  
 # timing parameters
 setp [PRUCONF](DRIVER).stepgen.04.dirsetup        [AXIS_4]DIRSETUP
