@@ -347,12 +347,12 @@ net current-motion-type motion.current-motion
 
 # these are used for a small offset in velocity during acceleration (buildup pressure inside
 # the nozzle because of the current speed. Take the maximum accel you've specified in .ini
-setp lincurve.0.y-val-00 -4.2
+setp lincurve.0.y-val-00 -9.2
 setp lincurve.0.y-val-01 0
-setp lincurve.0.y-val-02 4.2
-setp lincurve.0.x-val-00 -20
+setp lincurve.0.y-val-02 9.2
+setp lincurve.0.x-val-00 -25
 setp lincurve.0.x-val-01 0
-setp lincurve.0.x-val-02 20
+setp lincurve.0.x-val-02 25
 
 # get the extruder speed into sum2.2 and ddt
 net extruder-speed mux4.0.out sum2.2.in0 ddt.0.in
