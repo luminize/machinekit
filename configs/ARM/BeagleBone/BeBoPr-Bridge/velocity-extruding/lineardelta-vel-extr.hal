@@ -495,11 +495,11 @@ setp limit1.1.min 0
 #setp pid.0.FF0      0  
 #setp pid.0.FF1      0  
 #setp pid.0.FF2      0  
-setp pid.0.Pgain  0.30
-setp pid.0.Igain  0.00001
-setp pid.0.Dgain  0.9375
+setp pid.0.Pgain  0.022
+setp pid.0.Igain  0.004
+setp pid.0.Dgain  0.02
 setp pid.0.maxerrorI 1.0
-setp pid.0.bias    0.5  
+setp pid.0.bias    0.55 
 setp pid.0.enable   1
 
 # Bed
