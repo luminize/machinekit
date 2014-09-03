@@ -42,7 +42,7 @@ loadusr -Wn Therm ../ReadTemp.py -n Therm --num_chan 2 -t 1 1 -a 4 5
 
 #used for comparing temperature set value with actual for waiting on temperature
 loadrt wcomp count=2
-loadrt sum2 count=4
+loadrt sum2 count=5
 loadrt mult2 count=5
 loadrt abs count=6
 loadrt hypot count=2
@@ -50,11 +50,11 @@ loadrt invert count=1
 loadrt mux2 count=1
 loadrt mux4 count=1
 loadrt oneshot count=1
-loadrt ddt count=4
-loadrt lincurve count=1 personality=3
+loadrt ddt count=5
+loadrt lincurve count=1 personality=6
 loadrt lineardeltajointscartesian count=1
 loadrt conv_s32_float count=1
-loadrt integ count=1
+loadrt integ count=2
 
 # ################################################
 # THREADS
@@ -80,6 +80,7 @@ addf sum2.0                               servo-thread
 addf sum2.1                               servo-thread
 addf sum2.2				  servo-thread
 addf sum2.3				  servo-thread					  
+addf sum2.4				  servo-thread
 addf mult2.0                              servo-thread
 addf mult2.1				  servo-thread
 addf mult2.2				  servo-thread
@@ -101,10 +102,12 @@ addf ddt.0				  servo-thread
 addf ddt.1				  servo-thread
 addf ddt.2				  servo-thread
 addf ddt.3				  servo-thread
+addf ddt.4				  servo-thread
 addf lincurve.0				  servo-thread
 addf lineardeltajointscartesian.0	  servo-thread
 addf conv-s32-float.0			  servo-thread
 addf integ.0				  servo-thread
+addf integ.1				  servo-thread
 
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
@@ -332,23 +335,94 @@ net trigger-time motion.analog-out-04 => oneshot.0.width
 #get readout from the current motion pin, used in PID loop extruder
 net current-motion-type motion.current-motion
 
-# these are used for a small offset in velocity during acceleration (buildup pressure inside
-# the nozzle because of the current speed. Take the maximum accel you've specified in .ini
-
-setp lincurve.0.y-val-00 -4.0
-setp lincurve.0.y-val-01 0
-setp lincurve.0.y-val-02 4.0
-setp lincurve.0.x-val-00 -35
-setp lincurve.0.x-val-01 0
-setp lincurve.0.x-val-02 35
-
-# get the extruder speed into sum2.2 and ddt
-net extruder-speed mux4.0.out sum2.2.in0 ddt.0.in
+# get the extruder speed into lincurve.0 and integ.0
+net extruder-speed mux4.0.out lincurve.0.in integ.0.in
+# before PID test, when ok, delete these:
+# ddt.0.in sum2.2.in0 
 # get acceleration into lincurve
-net extruder-accel ddt.0.out lincurve.0.in
+# net extruder-accel ddt.0.out lincurve.0.in
+
+# realtime precharge/retract for nozzle pressure adjustment
+# the idea is to have the extruder motor follow with
+# a _position_ offset. For this we need to have the difference 
+# with the real output speed and the theoretical output speed
+# integrated over time
+
+# this "extra" area under the v-t diagram is the offset position
+# and this position is controlled by a PID loop that has the extruder
+# speed as output. This adjustment is done with the lincurve
+
+# lincurve is used to calculate the absolute offset of the
+# extruded filament as a function of speed tou counter the
+# elasticity hysteresis of filament and other process variables.
+# input speed
+# output offset position in mm filament
+setp lincurve.0.x-val-00 0.0
+setp lincurve.0.x-val-01 0.0005
+setp lincurve.0.x-val-02 1
+setp lincurve.0.x-val-03 2
+setp lincurve.0.x-val-04 3
+setp lincurve.0.x-val-05 4
+
+setp lincurve.0.y-val-00 0.00
+setp lincurve.0.y-val-01 0.01
+setp lincurve.0.y-val-02 0.07
+setp lincurve.0.y-val-03 0.18
+setp lincurve.0.y-val-04 0.24
+setp lincurve.0.y-val-05 0.3
+
+# lincurve.0.out will give an offset. For the PID loop this
+# offset must be added to the integrand of the speed (area under
+# v-t curve. This integrand is the theoretical position of the
+# extruded filament.
+#
+# the PID loop has as set value the (theoretical pos + offset) and
+# and as measured value the integrand of the current speed
+
+net extruder1-filament-offset <= lincurve.0.out
+net extruder1-theor-pos <= integ.0.out
+#add theor pos and offset
+net extruder1-theor-pos => sum2.2.in0
+net extruder1-filament-offset => sum2.2.in1
+
+net position-to-speed sum2.2.out ddt.4.in
+net extruder-velocity ddt.4.out
+
+# position used for input PID loop
+#net extruder1-set-pos <= sum2.2.out
+
+# PID for Extruder 0 temperature control, integ1 is integrand of 
+# actual extruder speed (output of PID loop)
+#net extr1-feedback-speed <= pid.2.output
+#net extr1-feedback-speed integ.1.in
+#net extruder1-feedback-pos <= integ.1.out
+# fill the PID loop with the set and the measured (real) position
+#net extruder1-set-pos => pid.2.command
+#net extruder1-feedback-pos => pid.2.feedback
+
+# e0 temp PID example
+#net e0.temp.meas    <= Therm.temp0
+#net e0.temp.meas    => pid.0.feedback
+#sets e0.temp.set  0
+#net e0.temp.set     => pid.0.command
+#net e0.heater  <= pid.0.output
+
+#net extr1-feedback-speed => sum2.4.in1
+net extruder-velocity => sum2.4.in1
+
+net extruder-final-velocity sum2.4.out => [PRUCONF](DRIVER).stepgen.03.velocity-cmd
+
+#net extr1-feedback-speed => [PRUCONF](DRIVER).stepgen.03.position-cmd
+
+newsig man-speed-addition float
+sets man-speed-addition 0
+net man-speed-addition sum2.4.in0
+
 # get adjusted speed for adding to current speed during accelleration
-net speed-adjustment lincurve.0.out sum2.2.in1
-net extruder-speed-adjusted sum2.2.out [PRUCONF](DRIVER).stepgen.03.velocity-cmd integ.0.in
+# previous and can be deleted if PID works:
+# net speed-adjustment lincurve.0.out sum2.2.in1
+# before PID test, when ok, delete these:
+#net extruder-speed-adjusted sum2.2.out [PRUCONF](DRIVER).stepgen.03.velocity-cmd
 
 #########
 ###todo
@@ -580,3 +654,12 @@ setp pid.1.Dgain  0.0
 setp pid.1.maxerrorI 1.0
 setp pid.1.bias    0.5  
 setp pid.1.enable   1
+
+# extruder1 position loop
+setp pid.2.Pgain  1000
+setp pid.2.Igain  0.0
+setp pid.2.Dgain  0.0
+setp pid.2.maxerrorI 100
+setp pid.2.maxerrorI 1.0
+setp pid.2.bias    0  
+setp pid.2.enable   1
