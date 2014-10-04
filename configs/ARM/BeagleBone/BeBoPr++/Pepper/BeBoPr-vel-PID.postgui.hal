@@ -1,0 +1,13 @@
+# Include your customized HAL commands here
+# The commands in this file are run after the AXIS GUI (including PyVCP panel) starts
+
+net e0.temp.set  => pyvcp.E0.Temp.set
+net e0.temp.meas => pyvcp.E0.Temp
+net bed.temp.set  => pyvcp.Bed.Temp.set
+net bed.temp.meas => pyvcp.Bed.Temp
+
+net emcmot.03.pos-fb pyvcp.motor.03.pos-fb
+net extruder-offset pyvcp.extruder-offset
+net extruder-pos-raw pyvcp.extruder-pos-raw
+net extruder-speed pyvcp.extruder-speed
+net nozzle-vel-cartesian pyvcp.nozzle-vel-cartesian
