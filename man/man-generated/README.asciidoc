@@ -1,0 +1,21 @@
+Machinekit MANPAGE documentation
+================================
+
+This repository is automatically generated from manpages that are generated
+during a build. Pull requests against this repository are therefore useless.
+
+If you notice erroneous information, please try to correct the manpages in the
+right place.
+
+. files which have `1`, `3`, `3hal`, `3hm2.`, `3rtapi.` or `9` in the extension
+  are manually made at some point in history, and should be corrected in
+  `man/man1`, `man/man3` or `man/man9`
+. files with `9comp` in the extension are generated during building the components and
+  have their origin in `src/hal/components`, `src/hal/drivers` or
+  `src/machinetalk/msgcomponents` and should be corrected in the source.
+
+Please visit:
+
+- link://https://machinekit.io[Machinekit.io]
+- link://https://github.com/machinekit/machinekit[Github page for Machinekit]
+- link://https://github.com/machinekit/machinekit-docs[Github page for Machinekit-docs]
