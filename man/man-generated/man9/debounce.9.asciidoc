@@ -1,0 +1,55 @@
+DEBOUNCE
+========
+
+. <<name,NAME>>
+. <<synopsis,SYNOPSIS>>
+. <<description,DESCRIPTION>>
+. <<functions,FUNCTIONS>>
+. <<pins,PINS>>
+
+
+
+
+===== [[name]]NAME
+
+debounce -- filter noisy digital inputs
+
+
+===== [[synopsis]]SYNOPSIS
+loadrt debounce cfg=__size[,size,...]__**
+**.P
+Creates filter groups each with the given number of filters (__size__).  Each
+filter group has the same sample rate and delay.
+
+
+
+===== [[description]]DESCRIPTION
+The debounce filter works by incrementing a counter whenever the input is true,
+and decrementing the counter when it is false.  If the counter decrements to
+zero, the output is set false and the counter ignores further decrements.  If
+the counter increments up to a threshold, the output is set true and the
+counter ignores further increments.  If the counter is between zero and the
+threshold, the output retains its previous state.  The threshold determines the
+amount of filtering: a threshold of 1 does no filtering at all, and a threshold
+of N requires a signal to be present for N samples before the output changes
+state.  
+
+
+
+===== [[functions]]FUNCTIONS
+
+debounce.__G__
+Sample all the input pins in group G and update the output pins.
+
+
+===== [[pins]]PINS
+
+debounce.__G__**.**__F__**.in** bit in
+The F'th input pin in group G.  
+
+debounce.__G__**.**__F__**.out** bit out
+The F'th output pin in group G.  Reflects the last "stable" input seen on the
+corresponding input pin.
+
+debounce.__G__**.delay** signed rw
+Sets the amount of filtering for all pins in group G.

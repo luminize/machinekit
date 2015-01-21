@@ -1,0 +1,51 @@
+hal_set_constructor
+===================
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<return-value,RETURN VALUE>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+hal_set_constructor -- Set the constructor function for this component
+
+
+
+===== [[syntax]]SYNTAX
+typedef int (*hal_constructor_t)(const char *prefix, const char *arg);
+int hal_set_constructor(int __comp_id__, hal_constructor_t __constructor__)
+
+
+
+===== [[arguments]]ARGUMENTS
+__comp_id__
+A HAL component identifier returned by an earlier call to **hal_init**.
+
+__prefix__
+The prefix to be given to the pins, parameters, and functions in the new
+instance
+
+arg
+An argument that may be used by the component to customize this istance.
+
+
+
+===== [[description]]DESCRIPTION
+As an experimental feature in HAL 2.1, components may be __constructable__.
+Such a component may create pins and parameters not only at the time the module
+is loaded, but it may create additional pins and parameters, and functions on
+demand.
+
+
+
+===== [[return-value]]RETURN VALUE
+Returns a HAL status code.
+
+
+
+===== [[see-also]]SEE ALSO
+**halcmd(1)**

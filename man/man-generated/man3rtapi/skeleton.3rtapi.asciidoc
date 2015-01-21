@@ -1,0 +1,39 @@
+funct
+=====
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<realtime-considerations,REALTIME CONSIDERATIONS>>
+. <<return-value,RETURN VALUE>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+funct -- one-line description of funct
+
+
+
+===== [[syntax]]SYNTAX
+void funct(__signature__)
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __rtapi_id__
+An RTAPI module identifier returned by an earlier call to **rtapi_init**.
+
+
+===== [[description]]DESCRIPTION
+
+
+===== [[realtime-considerations]]REALTIME CONSIDERATIONS
+
+
+===== [[return-value]]RETURN VALUE
+An RTAPI status code.
+
+
+===== [[see-also]]SEE ALSO

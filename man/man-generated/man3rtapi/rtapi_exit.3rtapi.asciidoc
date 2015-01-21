@@ -1,0 +1,42 @@
+rtapi_exit
+==========
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<realtime-considerations,REALTIME CONSIDERATIONS>>
+. <<return-value,RETURN VALUE>>
+
+
+===== [[name]]NAME
+
+rtapi_exit -- Shut down RTAPI
+
+
+
+===== [[syntax]]SYNTAX
+ int rtapi_exit(int __module_id__)
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __module_id__
+An rtapi module identifier returned by an earlier call to **rtapi_init**.
+
+
+
+===== [[description]]DESCRIPTION
+**rtapi_exit** shuts down and cleans up the RTAPI.  It must be
+called prior to exit by any module that called **rtapi_init**.
+
+
+
+===== [[realtime-considerations]]REALTIME CONSIDERATIONS
+Call only from within user or init/cleanup code, not from relatime tasks.
+
+
+
+===== [[return-value]]RETURN VALUE
+Returns a RTAPI status code.
+

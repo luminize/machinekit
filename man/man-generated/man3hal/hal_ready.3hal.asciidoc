@@ -1,0 +1,37 @@
+funct
+=====
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<return-value,RETURN VALUE>>
+
+
+===== [[name]]NAME
+
+hal_ready -- indicates that this component is ready
+
+
+
+===== [[syntax]]SYNTAX
+ hal_ready(int __comp_id__)
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __comp_id__
+A HAL component identifier returned by an earlier call to **hal_init**.
+
+
+
+===== [[description]]DESCRIPTION
+**hal_ready** indicates that this component is ready (has created all its pins,
+parameters, and functions).  This must be called in any realtime HAL component
+before its **rtapi_app_init** exits, and in any userspace component before it
+enters its main loop.
+
+
+
+===== [[return-value]]RETURN VALUE
+Returns a HAL status code.

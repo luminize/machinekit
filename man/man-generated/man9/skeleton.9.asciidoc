@@ -1,0 +1,47 @@
+SKELETON
+========
+
+. <<name,NAME>>
+. <<synopsis,SYNOPSIS>>
+. <<description,DESCRIPTION>>
+. <<functions,FUNCTIONS>>
+. <<pins,PINS>>
+. <<parameters,PARAMETERS>>
+. <<see-also,SEE ALSO>>
+
+
+
+
+===== [[name]]NAME
+skeleton -- gives the general format of manual pages for HAL components
+
+
+===== [[synopsis]]SYNOPSIS
+loadrt skeleton [count=__N__**]
+**
+
+===== [[description]]DESCRIPTION
+
+
+===== [[functions]]FUNCTIONS
+\" .TP 
+\" **skeleton.**__N__** (uses floating-point)
+**\" Describe the function here
+
+
+
+===== [[pins]]PINS
+\" .TP  
+\" .B skeleton.__N__**.in float in 
+**\" Analog input value
+
+
+
+===== [[parameters]]PARAMETERS
+\" .TP  
+\" .B skeleton.__N__**.gain float rw 
+**\" Analog gain value
+
+
+
+===== [[see-also]]SEE ALSO

@@ -1,0 +1,16 @@
+undocumented
+============
+
+. <<name,NAME>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+undocumented -- undocumented functions in HAL
+
+
+
+===== [[see-also]]SEE ALSO
+The header file __hal.h__.  Most hal functions have documentation
+in that file.

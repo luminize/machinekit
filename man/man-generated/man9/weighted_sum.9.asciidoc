@@ -1,0 +1,54 @@
+WEIGHTED_SUM
+============
+
+. <<name,NAME>>
+. <<synopsis,SYNOPSIS>>
+. <<description,DESCRIPTION>>
+. <<functions,FUNCTIONS>>
+. <<pins,PINS>>
+
+
+===== [[name]]NAME
+weighted_sum -- convert a group of bits to an integer
+
+
+===== [[synopsis]]SYNOPSIS
+loadrt weighted_sum wsum_sizes=__size[,size,...]__
+.P
+Creates weighted sum groups each with the given number of input bits
+(__size__).
+
+
+===== [[description]]DESCRIPTION
+This component is a "weighted summer": Its output is the offset plus the sum of
+the weight of each TRUE input bit.  The default value for each weight is 2^n
+where n is the bit number.  This results in a binary to unsigned conversion.
+
+There is a limit of 8 weighted summers and each may have up to 16 input bits.
+
+
+===== [[functions]]FUNCTIONS
+
+process_wsums (requires a floating point thread)
+Read all input values and update all output values.
+
+
+===== [[pins]]PINS
+
+wsum.__N__**.bit.**__M__**.in** bit in 
+The __m__'th input of weighted summer __n__.
+
+wsum.__N__**.hold** bit in
+When TRUE, the __sum__ output does not change.  When FALSE, the __sum__
+output tracks the __bit__ inputs according to the weights and offset.
+
+wsum.__N__**.sum** signed out
+The output of the weighted summer
+
+wsum.__N__**.bit.**__M__**.weight** signed rw
+The weight of the __m__'th input of weighted summer __n__.  The default
+value is 2^__m__.
+
+wsum.__N__**.offset** signed rw
+The offset is added to the weights corresponding to all TRUE inputs to give the
+final sum.

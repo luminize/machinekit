@@ -1,0 +1,68 @@
+hal_create_thread
+=================
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<realtime-considerations,REALTIME CONSIDERATIONS>>
+. <<return-value,RETURN VALUE>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+hal_create_thread -- Create a HAL thread
+
+
+
+===== [[syntax]]SYNTAX
+int hal_create_thread(const char *__name__, unsigned long
+__period__, int __uses_fp__, int __cpu_id__)
+
+int hal_thread_delete(const char *__name__)
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __name__
+The name of the thread
+
+.IP __period__
+The interval, in nanoseconds, between iterations of the thread
+
+.IP __uses_fp__
+Must be nonzero if a function which uses floating-point will be attached
+to this thread.
+
+pu_id
+Make the RTAPI layer bind this thread to a particular CPU core.
+
+
+
+===== [[description]]DESCRIPTION
+**hal_create_thread** establishes a realtime thread that will
+execute one or more HAL functions periodically.
+
+All thread periods are rounded to integer multiples of the hardware timer
+period, and the timer period is based on the first thread created.  Threads
+must be created in order, from the fastest to the slowest.  HAL assigns
+decreasing priorities to threads that are created later, so creating them
+from fastest to slowest results in rate monotonic priority scheduling.
+
+**hal_delete_thread** deletes a previously created thread.
+
+
+
+===== [[realtime-considerations]]REALTIME CONSIDERATIONS
+Call only from realtime init code, not from user space or realtime code.
+
+
+
+===== [[return-value]]RETURN VALUE
+Returns a HAL status code.
+
+
+
+===== [[see-also]]SEE ALSO
+**hal_export_funct(3hal)**

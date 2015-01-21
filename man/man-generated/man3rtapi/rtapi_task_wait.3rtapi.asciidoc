@@ -1,0 +1,40 @@
+rtapi_task_wait
+===============
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<description,DESCRIPTION>>
+. <<realtime-considerations,REALTIME CONSIDERATIONS>>
+. <<return-value,RETURN VALUE>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+rtapi_task_wait -- suspend execution of this periodic task
+
+
+
+===== [[syntax]]SYNTAX
+void rtapi_task_wait()
+
+
+
+===== [[description]]DESCRIPTION
+**rtapi_task_wait** suspends execution of the current task until the next
+period.  The task must be periodic.  If not, the result is undefined.
+
+
+
+===== [[realtime-considerations]]REALTIME CONSIDERATIONS
+Call only from within a periodic realtime task
+
+
+
+===== [[return-value]]RETURN VALUE
+None
+
+
+
+===== [[see-also]]SEE ALSO
+**rtapi_task_start(3rtapi)**, **rtapi_task_pause(3rtapi)**

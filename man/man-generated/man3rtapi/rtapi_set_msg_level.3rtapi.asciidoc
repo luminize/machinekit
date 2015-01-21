@@ -1,0 +1,51 @@
+rtapi_set_msg_level
+===================
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<realtime-considerations,REALTIME CONSIDERATIONS>>
+. <<return-value,RETURN VALUE>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+rtapi_get_msg_level, rtapi_set_msg_level -- Get or set the logging level
+
+
+
+===== [[syntax]]SYNTAX
+ int rtapi_set_msg_level(int __level__)
+
+ int rtapi_get_msg_level()
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __level__
+The desired logging level
+
+
+
+===== [[description]]DESCRIPTION
+Get or set the RTAPI message level used by **rtapi_print_msg**.  Depending
+on the RTOS, this level may apply to a single RTAPI module, or it may apply
+to a group of modules.
+
+
+
+===== [[realtime-considerations]]REALTIME CONSIDERATIONS
+May be called from user, init/cleanup, and realtime code.
+
+
+
+===== [[return-value]]RETURN VALUE
+**rtapi_set_msg_level** returns a status code, and **rtapi_get_msg_level**
+returns the current level.
+
+
+
+===== [[see-also]]SEE ALSO
+**rtapi_print_msg(3rtapi)**

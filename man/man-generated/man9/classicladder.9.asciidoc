@@ -1,0 +1,86 @@
+CLASSICLADDER
+=============
+
+. <<name,NAME>>
+. <<synopsis,SYNOPSIS>>
+. <<description,DESCRIPTION>>
+. <<pins,PINS>>
+. <<parameters,PARAMETERS>>
+. <<functions,FUNCTIONS>>
+. <<bugs,BUGS>>
+. <<see-also,SEE ALSO>>
+
+
+
+
+===== [[name]]NAME
+classicladder -- realtime software plc based on ladder logic
+
+
+===== [[synopsis]]SYNOPSIS
+**loadrt classicladder_rt  [numRungs=**__N__**] [numBits=**__N__**] [numWords=**__N__**] [numTimers=**__N__**] [numMonostables=**__N__**] [numCounters=**__N__**] [numPhysInputs=**__N__**] [numPhysOutputs=**__N__**] [numArithmExpr=**__N__**] [numSections=**__N__**] [numSymbols=**__N__**] [numS32in=**__N__**] [numS32out=**__N__**]
+**
+
+
+===== [[description]]DESCRIPTION
+These pins and parameters are created by the realtime **classicladder_rt** module. Each period (minimum 1000000 ns), classicladder reads the inputs, evaluates the ladder logic defined in the GUI, and then writes the outputs.
+
+
+
+===== [[pins]]PINS
+
+
+**classicladder.0.in-**__N__ IN bit 
+These bit signal pins map to **%I**__NNN__ variables in classicladder
+
+
+**classicladder.0.out-**__N__ OUT bit 
+These bit signal pins map to **%Q**__nNN__ variables in classicladder
+Output from classicladder
+
+
+**classicladder.0.in-**__N__ IN s32
+Integer input from classicladder
+These s32 signal pins map to **%IW**__NNN__ variables in classicladder
+
+
+**classicladder.0.out-**__N__ OUT s32 
+Integer output from classicladder
+These s32 signal pins map to **%QW**__NNN__ variables in classicladder
+
+
+
+===== [[parameters]]PARAMETERS
+
+
+**classicladder.0.refresh.time** RO s32
+Tells you how long the last refresh took
+
+
+**classicladder.0.refresh.tmax** RW s32
+Tells you how long the longest refresh took
+
+
+**classicladder.0.ladder-state** RO s32
+Tells you if the program is running or not
+
+
+===== [[functions]]FUNCTIONS
+
+
+**classicladder.0.refresh** FP 
+The rung update rate. Add this to the servo thread.
+You can added it to a faster thread but it
+Will update no faster than once every 1 millisecond (1000000 ns).
+
+
+
+===== [[bugs]]BUGS
+See http://wiki.linuxcnc.org/cgi-bin/wiki.pl?ClassicLadder_Ver_7.124 for the latest.
+
+
+
+===== [[see-also]]SEE ALSO
+__Classicladder__ chapters in the LinuxCNC documentation for a full description of the **Classicladder** syntax and examples
+
+http://wiki.linuxcnc.org/cgi-bin/wiki.pl?ClassicLadder_Ver_7.124

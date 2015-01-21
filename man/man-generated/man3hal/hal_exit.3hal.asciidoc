@@ -1,0 +1,42 @@
+hal_exit
+========
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<realtime-considerations,REALTIME CONSIDERATIONS>>
+. <<return-value,RETURN VALUE>>
+
+
+===== [[name]]NAME
+
+hal_exit -- Shut down HAL
+
+
+
+===== [[syntax]]SYNTAX
+int hal_exit(int __comp_id__)
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __comp_id__
+A HAL component identifier returned by an earlier call to **hal_init**.
+
+
+
+===== [[description]]DESCRIPTION
+**hal_exit** shuts down and cleans up HAL and RTAPI.  It must be
+called prior to exit by any module that called **hal_init**.
+
+
+
+===== [[realtime-considerations]]REALTIME CONSIDERATIONS
+Call only from within user or init/cleanup code, not from realtime tasks.
+
+
+
+===== [[return-value]]RETURN VALUE
+Returns a HAL status code.
+

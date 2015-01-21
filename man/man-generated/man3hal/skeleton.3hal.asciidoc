@@ -1,0 +1,38 @@
+funct
+=====
+
+. <<name,NAME>>
+. <<syntax,SYNTAX>>
+. <<arguments,ARGUMENTS>>
+. <<description,DESCRIPTION>>
+. <<return-value,RETURN VALUE>>
+. <<see-also,SEE ALSO>>
+
+
+===== [[name]]NAME
+
+funct -- one-line description of funct
+
+
+
+===== [[syntax]]SYNTAX
+int funct(__signature__)
+
+
+
+===== [[arguments]]ARGUMENTS
+.IP __comp_id__
+A HAL component identifier returned by an earlier call to **hal_init**.
+
+
+
+===== [[description]]DESCRIPTION
+
+
+
+===== [[return-value]]RETURN VALUE
+Returns a HAL status code.
+
+
+
+===== [[see-also]]SEE ALSO
