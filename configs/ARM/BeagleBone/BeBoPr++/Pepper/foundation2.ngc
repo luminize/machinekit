@@ -1,0 +1,122 @@
+(manually move the nozzle to the desired height)
+( set units to mm )
+G21
+( abs coordinates)
+G90
+( path blending with P-error and Q-naive cam )
+G64 P0.01 Q0.01
+( no radius compensation )
+G40
+( set fan on)
+M206 P255
+
+( set the layer height at 1.5 mm )
+M68 E3 Q1.5
+( set the line width at 1 mm )
+M68 E2 Q1
+
+( set temperature to 220 degrees )
+M104 P220
+( Wait until temperature has been reached )
+M66 P0 L3 Q100
+
+( got to the start of the foundation )
+( 1st layer)
+G0 X15 Y15 Z10.5
+( link extruder )
+M64 P2
+G91 (relative mode)
+G1 X-30 F400
+(assign parameter #1 the value of 0)
+#1 = 0
+o101 while [#1 LT 8]
+  G3 X0 Y-2 I0 J-1
+  G1 X30
+  G2 X0 Y-2 I0 J-1
+  G1 X-30
+  #1 = [#1+1] (increment the test counter)
+o101 endwhile
+
+( 2nd layer )
+G1 Z0.5
+( set the layer height at 0.5 mm )
+M68 E3 Q0.5
+( set the line width at 1.4 mm )
+M68 E2 Q1.4
+
+G1 Y29 F400
+(assign parameter #1 the value of 0)
+#1 = 0
+o102 while [#1 LT 7]
+  G2 X2 Y0 I1 J0
+  G1 Y-29
+  G3 X2 Y0 I1 J0
+  G1 Y29
+  #1 = [#1+1] (increment the test counter)
+o102 endwhile
+
+( foundation 2nd layer is done, now go up and repeat )
+( but with smaller layer and width )
+
+G1 Z0.3
+( set the layer height at 0.3 mm )
+M68 E3 Q0.3
+( set the line width at 0.5 mm )
+M68 E2 Q0.5
+
+G1 X-26 F1000
+(assign parameter #1 the value of 0)
+#1 = 0
+o103 while [#1 LT 18]
+  G3 X0 Y-0.5 I0 J-0.25
+  G1 X26
+  G2 X0 Y-0.5 I0 J-0.25
+  G1 X-26
+  #1 = [#1+1] (increment the test counter)
+o103 endwhile
+
+( another layer )
+( but with smaller layer and width )
+
+G1 Z0.2
+( set the layer height at 0.2 mm )
+M68 E3 Q0.2
+( set the line width at 0.5 mm )
+M68 E2 Q0.5
+
+G1 Y15 F2000
+(assign parameter #1 the value of 0)
+#1 = 0
+o104 while [#1 LT 20]
+  G2 X0.5 Y0 I0.25 J0
+  G1 Y-15
+  G3 X0.5 Y0 I0.25 J0
+  G1 Y15
+  #1 = [#1+1] (increment the test counter)
+o104 endwhile
+
+( last layer)
+G0 Z0.1
+( set the layer height at 0.1 mm )
+M68 E3 Q0.1
+( set the line width at 0.4 mm )
+M68 E2 Q0.4
+
+G1 X-15 F3000
+(assign parameter #1 the value of 0)
+#1 = 0
+o105 while [#1 LT 15]
+  G3 X0 Y-0.4 I0 J-0.2
+  G1 X15
+  G2 X0 Y-0.4 I0 J-0.2
+  G1 X-15
+  #1 = [#1+1] (increment the test counter)
+o105 endwhile
+
+( disconnect extruder )
+M65 P2
+G90
+G0 X50 Y50 Z200
+M104 P0
+
+M2
