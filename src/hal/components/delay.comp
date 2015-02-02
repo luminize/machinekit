@@ -1,0 +1,23 @@
+component delay "A delay by means of a circular buffer";
+pin in float in """The input value that is to be delayed""";
+pin out float out """The value of \\fBin\\fR shown after the specified \\fBtime\\fR.""";
+pin time float in """The delay time of \\fBin\\fR to \\fBout\\fR.""";
+param EN bit in """Enable bit for enabling the delay\\fBin\\fR to \\fBout\\fR""";
+description """
+This component will delay the signal of the \\fBin\\ for a given \\fBtime\\fR
+to the signal \\fBout\\fR when the \\fBEN\\fR parameter is \\fB1\\fR.
+.LP
+When the \\fBEN\\fR bit has an up flank, the entire buffer content is set to the
+current \\fBin\\fRvalue.
+.LP
+When enabled, each servo period the current \\fBin\\fR value is added to (position - 1),
+and the value of (position) is returned to \\fBout\\fR.
+.LP
+When the \\fBEN\\fR bit has a down flank, OR equals zero, the value of
+\\fBin\\fR is returned to \\fBout\\fR.
+"""
+author "Bas de Bruijn"
+license "GPL"; // indicates GPL v2 or later
+
+function _;
+;;
