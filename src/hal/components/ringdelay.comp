@@ -29,6 +29,145 @@ license "GPL"; // indicates GPL v2 or later
 function _;
 ;;
 
+option singleton yes;
+option rtapi_app no;
+
+license "GPLv2 or later";
+
+;;
+
+#define MAXSIZE 1024
+
+#include "hal_priv.h"
+#include "hal_ring.h"	        /* ringbuffer declarations */
+
+static char *ring = "ring_0";
+RTAPI_MP_STRING(ring,  "name of ring to attach");
+
+static ringbuffer_t rb;
+static ringiter_t ri;
+
+
+static char buffer[MAXSIZE];
+static size_t length;
+static char *name = "ringdelay";
+
+FUNCTION(_) {
+//from ringwrite----------------------------------------------------------------
+    if (write_prev ^  write) {
+	rtapi_snprintf(buffer, sizeof(buffer), "message %u to %s, sender=comp %d",
+		       sent, ring, comp_id);
+	length = strlen(buffer);
+	sent++;
+
+	if (rb.header->type == RINGTYPE_STREAM) {
+	    if (stream_write(&rb, buffer, length) != length)
+		overrun++;
+	} else {
+	    if (circular) {
+		// circular buffer behavior: drop oldest records if full
+		while (record_write(&rb, buffer, length) ==  EAGAIN) {
+		    dropped++;
+		    record_shift(&rb);
+		}
+	    } else {
+		// queue behavior: fail if insufficient space
+		if (record_write(&rb, buffer, length))
+		    overrun++;
+	    }
+	}
+	write_prev = write;
+    }
+
+//from ringread-----------------------------------------------------------------
+  ringvec_t vec[2];
+  ring_size_t rsize;
+  const void *data;
+
+  if (rb.header->type == RINGTYPE_STREAM) {
+  // peek into the stream, non-copy mode
+  stream_get_read_vector(&rb, vec);
+  rsize = vec[0].rv_len + vec[1].rv_len;
+  if (vec[0].rv_len) {
+    rtapi_print_msg(RTAPI_MSG_ERR, "%s(%s): bytes=%d '%.*s",
+        name, ring, rsize,
+        (int) vec[0].rv_len, (char *) vec[0].rv_base);
+    if (vec[1].rv_len) {
+  rtapi_print_msg(RTAPI_MSG_ERR, "%.*s",
+      (int) vec[1].rv_len, (char *) vec[1].rv_base);
+    }
+    rtapi_print_msg(RTAPI_MSG_ERR, "'\n");
+
+    // consume bytes read
+    stream_read_advance(&rb, rsize);
+    received++;
+    // if we have a scratchpad, leave a dropping there
+    if (rb.scratchpad) {
+  rtapi_snprintf(rb.scratchpad,ring_scratchpad_size(&rb),
+           "received=%d underrun=%d",
+           received, underrun);
+    }
+  } else
+    underrun++;
+  } else {
+  if (circular) {
+    char buf[MAXSIZE];
+    int result;
+    size_t size;
+
+    result = record_iter_read(&ri, &data, &size);
+    switch (result) {
+    case EINVAL:
+  // generation changed due to consumer too slow, renew
+  tooslow++;
+  record_iter_init(&rb, &ri);
+  break;
+    case EAGAIN:
+  // ring empty
+  underrun++;
+  break;
+    default:
+  // record available, but commit only after successful iter_shift()
+  memcpy(buf, data, size > sizeof(buf) ? sizeof(buf) : size);
+  if (record_iter_shift(&ri) == EINVAL) {
+      tooslow++;
+      break;
+  }
+  // good to consume buffer
+  rtapi_print_msg(RTAPI_MSG_ERR,
+      "circular: %s(%s): reclen=%zu '%.*s', writer=%d\n",
+      name, ring, size, (int) size, buf,
+      rb.header->writer);
+  break;
+    }
+  } else {
+    rsize = record_next_size(&rb);
+    if (rsize < 0) {
+  // ring empty
+  underrun++;
+  return;
+    }
+    rtapi_print_msg(RTAPI_MSG_ERR, "%s(%s): reclen=%d '%.*s', writer=%d\n",
+        name, ring, rsize, rsize,
+        (char *) record_next(&rb),
+        rb.header->writer);
+    // consume record
+    record_shift(&rb);
+    received++;
+  }
+  if (rb.scratchpad) {
+    rtapi_snprintf(rb.scratchpad,ring_scratchpad_size(&rb),
+       "received=%d underrun=%d",
+       received, underrun);
+  }
+  }
+}
+
+FUNCTION(_) {
+
+}
+
+
 
 int rtapi_app_main(void)
 {
