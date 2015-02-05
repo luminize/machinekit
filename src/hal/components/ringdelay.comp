@@ -1,22 +1,29 @@
 component delay "A delay by means of a circular buffer";
-pin in float in """The input value that is to be delayed""";
-pin out float out """The value of \\fBin\\fR shown after the specified \\fBtime\\fR.""";
-pin time float in """The delay time of \\fBin\\fR to \\fBout\\fR.""";
-param EN bit in """Enable bit for enabling the delay\\fBin\\fR to \\fBout\\fR""";
+pin in float in "The input value that is to be delayed";
+pin out float out "The value of \\fBin\\fR shown after the specified \\fBtime\\fR.";
+pin in float time "The delay time of \\fBin\\fR to \\fBout\\fR.";
 description """
 This component will delay the signal of the \\fBin\\ for a given \\fBtime\\fR
 to the signal \\fBout\\fR when the \\fBEN\\fR parameter is \\fB1\\fR.
 .LP
-When the \\fBEN\\fR bit has an up flank, the entire buffer content is set to the
-current \\fBin\\fRvalue.
+When time equals \"0\" then the reading position of the ringbuffer equals the
+writing position. Thus \\fBout\\fR equals \\fB\\fR.
 .LP
-When enabled, each servo period the current \\fBin\\fR value is added to (position - 1),
-and the value of (position) is returned to \\fBout\\fR.
+When \\fBtime\\fR is increased, say for ease of understanding that it was
+\\fB0\\fR, and is set to \\fB10\\fR periods. The reading position will wait 10
+periods (so it is not increased) while the writing position will increase with
+each period. If the reading position equals its target delay then it will also
+increase with each period.
 .LP
-When the \\fBEN\\fR bit has a down flank, OR equals zero, the value of
-\\fBin\\fR is returned to \\fBout\\fR.
-"""
-author "Bas de Bruijn"
+When \\fBtime\\fR is decreased, for example: it was \\fB10\\fR, and is set to
+\\fB3\\fR periods. The writing position will now wait 7 periods (so it is not
+increased) while the reading position will increase with each period until it
+has reached the target delay.
+.LP
+The \\fBtime\\fR must never be greater than the (max size -1) of the ring. and
+is then limited to (max size -1)
+""";
+author "Bas de Bruijn";
 license "GPL"; // indicates GPL v2 or later
 
 function _;
