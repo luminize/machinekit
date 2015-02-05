@@ -28,3 +28,48 @@ license "GPL"; // indicates GPL v2 or later
 
 function _;
 ;;
+
+
+int rtapi_app_main(void)
+{
+    int retval;
+
+    comp_id = hal_init(name);
+    if (comp_id < 0) {
+	rtapi_print_msg(RTAPI_MSG_ERR,
+			"%s: ERROR: hal_init() failed: %d\n",
+			name, comp_id);
+	return -1;
+    }
+    if ((retval = hal_ring_attach(ring, &rb, NULL))) {
+	rtapi_print_msg(RTAPI_MSG_ERR,
+			"%s: ERROR: hal_ring_attach(%s) failed: %d\n",
+			name, ring, retval);
+	return -1;
+    }
+    rb.header->writer = comp_id;
+    rb.header->writer_instance = rtapi_instance;
+    if ((retval = export(name, 0))) {
+	rtapi_print_msg(RTAPI_MSG_ERR,
+			"%s: ERROR: export(%s) failed: %d\n",
+			name, name, retval);
+	return -1;
+    }
+    hal_ready(comp_id);
+    rtapi_print_msg(RTAPI_MSG_ERR,
+		    "%s: attached to %s reader=%d writer=%d\n",
+		    name, ring, rb.header->reader, rb.header->writer);
+
+    return 0;
+}
+
+void rtapi_app_exit(void)
+{
+    int retval;
+    rb.header->writer = 0;
+    if ((retval = hal_ring_detach(ring, &rb)) < 0)
+	rtapi_print_msg(RTAPI_MSG_ERR,
+			"%s: ERROR: hal_ring_detach(%s) failed: %d\n",
+			name, ring, retval);
+    hal_exit(comp_id);
+}
