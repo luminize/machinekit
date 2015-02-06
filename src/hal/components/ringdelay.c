@@ -7,6 +7,8 @@ todo other info and stuff
 #include "rtapi_app.h"
 #include "rtapi_string.h"
 #include "hal.h"
+#include "hal_priv.h"
+#include "hal_ring.h"
 
 /* module information */
 MODULE_AUTHOR("Bas de Bruijn");
@@ -21,17 +23,22 @@ static int howmany;
 char *names[MAX_CHAN] ={0,};
 RTAPI_MP_ARRAY_STRING(names, MAX_CHAN,"ringdelay names");
 
-/* todo DECLARATIONS FOR RINGBUFFER */
+/* ringbuffer stuff, including the single_ring_size when loading */
+static int single_ring_size;
+static int default_ring_size = 1024;
+RTAPI_MP_INT(single_ring_size, "single ringdelay size");
+static int spsize = 0;
+RTAPI_MP_INT(spsize, "size of scratchpad area");
+static int in_halmem = 1;
+RTAPI_MP_INT(in_halmem, "allocate ring in HAL shared memory");
 
 typedef struct {
-    hal_bit_t *bit_enable;        /* pin: enable this */
-    hal_bit_t *bit_abort;         /* pin: abort pin */
-    hal_float_t *flt_in;	          /* pin: incoming value */
-    hal_float_t *flt_out;	         /* pin: delayed value */
+    hal_bit_t *bit_enable;       /* pin: enable this */
+    hal_bit_t *bit_abort;        /* pin: abort pin */
+    hal_float_t *flt_in;	       /* pin: incoming value */
+    hal_float_t *flt_out;	      /* pin: delayed value */
     hal_float_t *flt_delay;      /* pin: delay time */
-
-// todo PUT RING IN STRUCT ???
-
+    hal_ring_t *ring;            /* the ring */
 } hal_ringdelay_t;
 
 // pointer to array of ringdelay_t structs in shared memory, 1 per loop
@@ -70,7 +77,10 @@ int rtapi_app_main(void)
           howmany = i + 1;
       }
     }
-
+    /* see if a single_ring_size has been given */
+    if(!single_ring_size) {
+      single_ring_size = default_ring_size;
+    }
     /* test for number of channels */
     if ((howmany <= 0) || (howmany > MAX_CHAN)) {
       rtapi_print_msg(RTAPI_MSG_ERR,
@@ -168,6 +178,7 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
 {
     int retval, msg;
     char buf[HAL_NAME_LEN + 1];
+    int circular_buffer = 1;      /* circular buffer of non-zero  */
     msg = rtapi_get_msg_level();
     rtapi_set_msg_level(RTAPI_MSG_WARN);
 
@@ -196,8 +207,6 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
     if (retval != 0) {
       return retval;
     }
-
-// todo INITIATE A RINGBUFFER HERE
 
     /* set the initial values*/
     *(addr->bit_enable) = 0;
@@ -232,6 +241,15 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
       rtapi_print_msg(RTAPI_MSG_ERR,
         "RINGDELAY: ERROR: calculate_delay function export failed\n");
       hal_exit(comp_id);
+      return -1;
+    }
+    /* make a new ring, like ringdelay.0.ring */
+    rtapi_snprintf(buf, sizeof(buf), "%s.ring", prefix);
+    retval = hal_ring_new(buf, single_ring_size, spsize, circular_buffer);
+    if (retval != 0) {
+      rtapi_print_msg(RTAPI_MSG_ERR,
+        "RINGDELAY ERROR: failed to create new ring %s.ring\n",
+        buf, retval);
       return -1;
     }
     /* restore saved message level */
