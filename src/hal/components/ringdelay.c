@@ -38,6 +38,8 @@ typedef struct {
     hal_float_t *flt_in;	       /* pin: incoming value */
     hal_float_t *flt_out;	      /* pin: delayed value */
     hal_float_t *flt_delay;      /* pin: delay time */
+    hal_float_t *dbg_i_read;	   /* pin: debug pin for read position */
+    hal_float_t *dbg_i_write;	  /* pin: debug pin for write position */
     hal_ring_t *ring;            /* the ring */
 } hal_ringdelay_t;
 
@@ -204,6 +206,16 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
     }
     retval = hal_pin_float_newf(HAL_IN, &(addr->flt_delay), comp_id,
         "%s.delay", prefix);
+    if (retval != 0) {
+      return retval;
+    }
+    retval = hal_pin_float_newf(HAL_OUT, &(addr->dbg_i_read), comp_id,
+        "%s.dbg-i-read", prefix);
+    if (retval != 0) {
+      return retval;
+    }
+    retval = hal_pin_float_newf(HAL_OUT, &(addr->dbg_i_write), comp_id,
+        "%s.dbg-i-write", prefix);
     if (retval != 0) {
       return retval;
     }
