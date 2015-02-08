@@ -3,6 +3,8 @@ component written by Bas de Bruijn
 todo other info and stuff
 */
 
+
+#include <stdint.h>
 #include "rtapi.h"
 #include "rtapi_app.h"
 #include "rtapi_string.h"
@@ -14,14 +16,23 @@ todo other info and stuff
 MODULE_AUTHOR("Bas de Bruijn");
 MODULE_DESCRIPTION("Ringbuffer delay component for Machinekit HAL");
 MODULE_LICENSE("GPLv2");
-static int num_chan;		        /* number of channels */
-static int default_num_chan = 3;
-RTAPI_MP_INT(num_chan, "number of channels");
 
-static int howmany;
-#define MAX_CHAN 16
-char *names[MAX_CHAN] ={0,};
-RTAPI_MP_ARRAY_STRING(names, MAX_CHAN,"ringdelay names");
+#define MAX_DELAYS 8
+char *delays[MAX_DELAYS];
+static int num_delay;	 	        /* number of delays */
+static int default_num_delay = 1;
+RTAPI_MP_INT(num_delay, "number of delays");
+static int howmany_delays;
+
+#define MAX_CHANNELS 8
+char *channels[MAX_CHANNELS];
+static int num_channel;          /* number of chanels per delay */
+static int default_num_channel = 3;
+RTAPI_MP_INT(num_channel, "nr of channels for a delay");
+static int howmany_channels;
+
+char *names[MAX_CHANNELS] ={0,};
+RTAPI_MP_ARRAY_STRING(names, MAX_CHANNELS,"ringdelay names");
 
 /* ringbuffer stuff, including the single_ring_size when loading */
 static int single_ring_size;
@@ -32,19 +43,28 @@ RTAPI_MP_INT(spsize, "size of scratchpad area");
 static int in_halmem = 1;
 RTAPI_MP_INT(in_halmem, "allocate ring in HAL shared memory");
 
+
 typedef struct {
-    hal_bit_t *bit_enable;       /* pin: enable this */
-    hal_bit_t *bit_abort;        /* pin: abort pin */
-    hal_float_t *flt_in;	       /* pin: incoming value */
-    hal_float_t *flt_out;	      /* pin: delayed value */
-    hal_float_t *flt_delay;      /* pin: delay time */
-    hal_float_t *dbg_i_read;	   /* pin: debug pin for read position */
-    hal_float_t *dbg_i_write;	  /* pin: debug pin for write position */
-    hal_ring_t *ring;            /* the ring */
+    hal_bit_t *bit_enable;       /* pin: enable this                   */
+    hal_bit_t *bit_abort;        /* pin: abort pin                     */
+    hal_float_t **flt_in;	      /* pin: array incoming value          */
+    hal_float_t **flt_out;	     /* pin: array delayed value           */
+    hal_u32_t *delay;             /* pin: delay time                    */
+    hal_float_t *dbg_i_read;	   /* pin: debug pin for read position   */
+    hal_float_t *dbg_i_write;	  /* pin: debug pin for write position  */
+    hal_ring_t *ring;            /* the ring                           */
+    int *num_channels;            /* number of channels in this delay   */
 } hal_ringdelay_t;
+
+typedef struct {
+    uint64_t timestamp;           /* timestamp of measurement           */
+    hal_float_t value[0];        /* measured value                     */
+} sample_t;
 
 // pointer to array of ringdelay_t structs in shared memory, 1 per loop
 static hal_ringdelay_t *ringdelay_array;
+// pointer to sample
+static sample_t *pin_sample;
 static int comp_id;
 
 // declaration of functions for threads
@@ -59,34 +79,47 @@ static int export_ringdelay(hal_ringdelay_t * addr,char * prefix);
 // initialisation routine
 int rtapi_app_main(void)
 {
-    int n, retval,i;
-
-    if(num_chan && names[0]) {
-      rtapi_print_msg(RTAPI_MSG_ERR,"num_chan= and names= are mutually exclusive\n");
+    int n, retval, i;
+    hal_ringdelay_t *current_ringdelay;
+    if(num_delay && names[0]) {
+      rtapi_print_msg(RTAPI_MSG_ERR,"num_delay= and names= are mutually exclusive\n");
     return -EINVAL;
     }
-    if(!num_chan && !names[0]) num_chan = default_num_chan;
+    if(!num_delay && !names[0]) num_delay = default_num_delay;
 
-    if(num_chan) {
-      howmany = num_chan;
+    if(num_delay) {
+      howmany_delays = num_delay;
     }
     else {
-      howmany = 0;
-      for (i = 0; i < MAX_CHAN; i++) {
+      howmany_delays = 0;
+      for (i = 0; i < MAX_DELAYS; i++) {
           if (names[i] == NULL) {
               break;
           }
-          howmany = i + 1;
+          howmany_delays = i + 1;
       }
     }
     /* see if a single_ring_size has been given */
     if(!single_ring_size) {
       single_ring_size = default_ring_size;
     }
-    /* test for number of channels */
-    if ((howmany <= 0) || (howmany > MAX_CHAN)) {
+    /* check number of channels per delay*/
+    if(!num_channel) {
+      num_channel = default_num_channel;
+    }
+    if(num_channel) {
+      howmany_channels = num_channel;
+    }
+    /* test for number of delays */
+    if ((howmany_delays <= 0) || (howmany_delays > MAX_DELAYS)) {
       rtapi_print_msg(RTAPI_MSG_ERR,
-        "RINGDELAY: ERROR: invalid number of channels: %d\n", howmany);
+        "RINGDELAY: ERROR: invalid number of delays: %d\n", howmany_delays);
+      return -1;
+    }
+      /* test for number of channels */
+    if ((howmany_channels <= 0) || (howmany_channels > MAX_CHANNELS)) {
+      rtapi_print_msg(RTAPI_MSG_ERR,
+        "RINGDELAY: ERROR: invalid number of chanels: %d\n", howmany_channels);
       return -1;
     }
 
@@ -97,19 +130,29 @@ int rtapi_app_main(void)
       return -1;
     }
 
-    /* allocate shared memory for RINGDELAY loop data */
-    ringdelay_array = hal_malloc(howmany * sizeof(hal_ringdelay_t));
+    /* allocate shared memory for RINGDELAY instances */
+    ringdelay_array = hal_malloc(howmany_delays * sizeof(hal_ringdelay_t));
     if (ringdelay_array == 0) {
-      rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() failed\n");
+      rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for hal_ringdelay_t failed\n");
+      hal_exit(comp_id);
+      return -1;
+    }
+    /* allocate shared memory for SAMPLE data */
+    pin_sample = hal_malloc(sizeof(sample_t));
+    if (pin_sample == 0) {
+      rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for pin_sample failed\n");
       hal_exit(comp_id);
       return -1;
     }
 
     /* export variables and function for each RINGDELAY loop */
     i = 0; // for names= items
-    for (n = 0; n < howmany; n++) {
-
-      if(num_chan) {
+    for (n = 0; n < howmany_delays; n++) {
+      /* tell the instance (delay) how many channels it has so that it later
+         in export_ringdelay() knows how much pins to make */
+      current_ringdelay = &(ringdelay_array[n]);
+      *(current_ringdelay->num_channels) = num_channel;
+      if(num_delay) {
         char buf[HAL_NAME_LEN + 1];
         rtapi_snprintf(buf, sizeof(buf), "ringdelay.%d", n);
         retval = export_ringdelay(&(ringdelay_array[n]), buf);
@@ -127,7 +170,7 @@ int rtapi_app_main(void)
     }
 
     rtapi_print_msg(RTAPI_MSG_INFO,
-      "RINGDELAY: installed %d RINGDELAY loops\n", howmany);
+      "RINGDELAY: installed %d RINGDELAY loops\n", howmany_delays);
     hal_ready(comp_id);
     return 0;
 }
@@ -178,12 +221,27 @@ static void delayed_write(void *arg, long period)
 // export these pins so they exist in the HAL layer
 static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
 {
-    int retval, msg;
+    int retval, i, msg;
     char buf[HAL_NAME_LEN + 1];
     int circular_buffer = 1;      /* circular buffer of non-zero  */
     msg = rtapi_get_msg_level();
     rtapi_set_msg_level(RTAPI_MSG_WARN);
 
+    /* for each channel in this delay the pins must be set*/
+    for (i = 0; 1 < *(addr->num_channels); i++) {
+      retval = hal_pin_float_newf(HAL_IN, &(addr->flt_in[i]), comp_id,
+          "%s.in.%s", prefix, i);
+      if (retval != 0) {
+        return retval;
+      }
+      retval = hal_pin_float_newf(HAL_OUT, &(addr->flt_out[i]), comp_id,
+          "%s.out.%s", prefix, i);
+      if (retval != 0) {
+        return retval;
+      }
+      *(addr->flt_in[i]) = 0.0;
+      *(addr->flt_out[i]) = 0.0;
+    }
     retval = hal_pin_bit_newf(HAL_IN, &(addr->bit_enable), comp_id,
             "%s.enable", prefix);
     if (retval != 0) {
@@ -194,17 +252,7 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
     if (retval != 0) {
       return retval;
     }
-    retval = hal_pin_float_newf(HAL_IN, &(addr->flt_in), comp_id,
-        "%s.in", prefix);
-    if (retval != 0) {
-      return retval;
-    }
-    retval = hal_pin_float_newf(HAL_OUT, &(addr->flt_out), comp_id,
-        "%s.out", prefix);
-    if (retval != 0) {
-      return retval;
-    }
-    retval = hal_pin_float_newf(HAL_IN, &(addr->flt_delay), comp_id,
+    retval = hal_pin_u32_newf(HAL_IN, &(addr->delay), comp_id,
         "%s.delay", prefix);
     if (retval != 0) {
       return retval;
@@ -223,9 +271,7 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
     /* set the initial values*/
     *(addr->bit_enable) = 0;
     *(addr->bit_abort) = 0;
-    *(addr->flt_in) = 0.0;
-    *(addr->flt_out) = 0.0;
-    *(addr->flt_delay) = 0;
+    *(addr->delay) = 0;
 
     // export the functions for using in the (servo-)thread
     // read_input function
