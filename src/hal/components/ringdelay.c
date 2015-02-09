@@ -43,6 +43,8 @@ RTAPI_MP_INT(spsize, "size of scratchpad area");
 static int in_halmem = 1;
 RTAPI_MP_INT(in_halmem, "allocate ring in HAL shared memory");
 
+static char *command = "command";
+RTAPI_MP_STRING(command,  "name of command ring");
 
 typedef struct {
     hal_bit_t *bit_enable;       /* pin: enable this                   */
@@ -52,7 +54,7 @@ typedef struct {
     hal_u32_t *delay;            /* pin: delay time                    */
     hal_float_t *dbg_i_read;	   /* pin: debug pin for read position   */
     hal_float_t *dbg_i_write;	  /* pin: debug pin for write position  */
-    hal_ring_t *ring;            /* the ring                           */
+    ringbuffer_t *ring;          /* the ring                           */
 } hal_ringdelay_t;
 
 typedef struct {
@@ -73,12 +75,14 @@ static void delayed_write(void *arg, long period);
 static void abort_delay(void *arg, long period);
 
 // this is the routine where the pins are made
-static int export_ringdelay(hal_ringdelay_t * addr,char * prefix);
+static int export_ringdelay(hal_ringdelay_t * addr, char * prefix, int *n);
 
 // initialisation routine
 int rtapi_app_main(void)
 {
     int n, retval, i;
+    int circular_buffer = 1;      /* circular buffer of non-zero  */
+    char ringname[HAL_NAME_LEN + 1];
     hal_ringdelay_t *current_ringdelay;
     if(num_delay && names[0]) {
       rtapi_print_msg(RTAPI_MSG_ERR,"num_delay= and names= are mutually exclusive\n");
@@ -151,13 +155,22 @@ int rtapi_app_main(void)
     /* export variables and function for each RINGDELAY loop */
     i = 0; // for names= items
     for (n = 0; n < howmany_delays; n++) {
+      /* create ring*/
+      snprintf(ringname, HAL_NAME_LEN, "ringdelay-ring%d",n);
+      retval = hal_ring_new(ringname, single_ring_size, spsize,circular_buffer);
+      if (retval != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR,
+              "RINGDELAY: failed to create new ring %s: %d\n",
+              ringname, retval);
+        }
+      /* export the pins */
       if(num_delay) {
         char buf[HAL_NAME_LEN + 1];
         rtapi_snprintf(buf, sizeof(buf), "ringdelay.%d", n);
-        retval = export_ringdelay(&(ringdelay_array[n]), buf);
+        retval = export_ringdelay(&(ringdelay_array[n]), buf, &n);
       }
       else {
-        retval = export_ringdelay(&(ringdelay_array[n]), names[i++]);
+        retval = export_ringdelay(&(ringdelay_array[n]), names[i++], &n);
       }
 
       if (retval != 0) {
@@ -218,11 +231,11 @@ static void delayed_write(void *arg, long period)
 }
 
 // export these pins so they exist in the HAL layer
-static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
+static int export_ringdelay(hal_ringdelay_t * addr, char * prefix, int * n)
 {
     int retval, i, msg;
     char buf[HAL_NAME_LEN + 1];
-    int circular_buffer = 1;      /* circular buffer of non-zero  */
+    char ringname[HAL_NAME_LEN + 1];
     msg = rtapi_get_msg_level();
     rtapi_set_msg_level(RTAPI_MSG_WARN);
 
@@ -320,15 +333,16 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
       hal_exit(comp_id);
       return -1;
     }
-    /* make a new ring, like ringdelay.0.ring */
-    rtapi_snprintf(buf, sizeof(buf), "%s.ring", prefix);
-    retval = hal_ring_new(buf, single_ring_size, spsize, circular_buffer);
+    /* attach to the newly created ring*/
+    addr->ring = hal_malloc(sizeof(ringbuffer_t));
+    snprintf(ringname, HAL_NAME_LEN, "ringdelay-ring%d",*n);
+    retval = hal_ring_attach(ringname, addr->ring,NULL);
     if (retval != 0) {
-      rtapi_print_msg(RTAPI_MSG_ERR,
-        "RINGDELAY ERROR: failed to create new ring %s.ring\n",
-        buf, retval);
-      return -1;
-    }
+        rtapi_print_msg(RTAPI_MSG_ERR,
+        "RINGDELAY: %s: ERROR: hal_ring_attach() failed: %d\n",
+      ringname, retval);
+    return -1;
+      }
     /* restore saved message level */
     rtapi_set_msg_level(msg);
     return 0;
