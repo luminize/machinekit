@@ -49,15 +49,14 @@ typedef struct {
     hal_bit_t *bit_abort;        /* pin: abort pin                     */
     hal_float_t **flt_in;	      /* pin: array incoming value          */
     hal_float_t **flt_out;	     /* pin: array delayed value           */
-    hal_u32_t *delay;             /* pin: delay time                    */
+    hal_u32_t *delay;            /* pin: delay time                    */
     hal_float_t *dbg_i_read;	   /* pin: debug pin for read position   */
     hal_float_t *dbg_i_write;	  /* pin: debug pin for write position  */
     hal_ring_t *ring;            /* the ring                           */
-    int *num_channels;            /* number of channels in this delay   */
 } hal_ringdelay_t;
 
 typedef struct {
-    uint64_t timestamp;           /* timestamp of measurement           */
+    uint64_t timestamp;          /* timestamp of measurement           */
     hal_float_t value[0];        /* measured value                     */
 } sample_t;
 
@@ -122,13 +121,15 @@ int rtapi_app_main(void)
         "RINGDELAY: ERROR: invalid number of chanels: %d\n", howmany_channels);
       return -1;
     }
-
+    rtapi_print_msg(RTAPI_MSG_INFO, "RINGDELAY: %d delays with %d channels\n",
+      howmany_delays, howmany_channels);
     /* have good config info, connect to the HAL */
     comp_id = hal_init("ringdelay");
     if (comp_id < 0) {
       rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_init() failed\n");
       return -1;
     }
+    rtapi_print_msg(RTAPI_MSG_INFO, "RINGDELAY: connected to HAL\n");
 
     /* allocate shared memory for RINGDELAY instances */
     ringdelay_array = hal_malloc(howmany_delays * sizeof(hal_ringdelay_t));
@@ -137,6 +138,7 @@ int rtapi_app_main(void)
       hal_exit(comp_id);
       return -1;
     }
+    rtapi_print_msg(RTAPI_MSG_INFO, "RINGDELAY: memory allocated for ringdelay_array\n");
     /* allocate shared memory for SAMPLE data */
     pin_sample = hal_malloc(sizeof(sample_t));
     if (pin_sample == 0) {
@@ -144,14 +146,11 @@ int rtapi_app_main(void)
       hal_exit(comp_id);
       return -1;
     }
+    rtapi_print_msg(RTAPI_MSG_INFO, "RINGDELAY: memory allocated for pin_sample\n");
 
     /* export variables and function for each RINGDELAY loop */
     i = 0; // for names= items
     for (n = 0; n < howmany_delays; n++) {
-      /* tell the instance (delay) how many channels it has so that it later
-         in export_ringdelay() knows how much pins to make */
-      current_ringdelay = &(ringdelay_array[n]);
-      *(current_ringdelay->num_channels) = num_channel;
       if(num_delay) {
         char buf[HAL_NAME_LEN + 1];
         rtapi_snprintf(buf, sizeof(buf), "ringdelay.%d", n);
@@ -228,17 +227,37 @@ static int export_ringdelay(hal_ringdelay_t * addr, char * prefix)
     rtapi_set_msg_level(RTAPI_MSG_WARN);
 
     /* for each channel in this delay the pins must be set*/
-    for (i = 0; 1 < *(addr->num_channels); i++) {
+    /* example from matrix_kb.c
+    ** inst->hal.key = (hal_bit_t **)hal_malloc(inst->nrows * inst->ncols * sizeof(hal_bit_t*));
+    */
+    addr->flt_in = (hal_float_t **)hal_malloc(num_channel * sizeof(hal_float_t*));
+      if (addr->flt_in == 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for ringdelay_array[n]->flt_in failed\n");
+        hal_exit(comp_id);
+        return -1;
+      }
+    addr->flt_out = (hal_float_t **)hal_malloc(num_channel * sizeof(hal_float_t*));
+      if (addr->flt_out == 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for ringdelay_array[n]->flt_out failed\n");
+        hal_exit(comp_id);
+        return -1;
+      }
+    /* memory for pin-array succesfully allocated */
+    rtapi_print_msg(RTAPI_MSG_ERR,
+      "RINGDELAY: memory for pins %s.in and %s.out allocated", prefix, prefix);
+    /* set up the array of pins */
+    for (i = 0; i < num_channel; i++) {
       retval = hal_pin_float_newf(HAL_IN, &(addr->flt_in[i]), comp_id,
-          "%s.in.%s", prefix, i);
+          "%s.in%d", prefix, i);
       if (retval != 0) {
         return retval;
       }
       retval = hal_pin_float_newf(HAL_OUT, &(addr->flt_out[i]), comp_id,
-          "%s.out.%s", prefix, i);
+          "%s.out%d", prefix, i);
       if (retval != 0) {
         return retval;
       }
+      /* give the pins initial values */
       *(addr->flt_in[i]) = 0.0;
       *(addr->flt_out[i]) = 0.0;
     }
