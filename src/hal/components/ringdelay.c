@@ -76,11 +76,11 @@ static hal_ringdelay_t *ringdelay_array;
 // pointer to sample
 static sample_t *ring_sample;
 static int comp_id;
-static uint64_t *actual_time = 0;
+static uint64_t actual_time = 0;
 
 // declaration of functions for threads
 static void delay(void *arg, long period);
-static void delayed_write(void *arg, long period);
+static int write_sample_to_ring(hal_ringdelay_t * inst);
 static void abort_delay(void *arg, long period);
 
 // this is the routine where the pins are made
@@ -155,10 +155,18 @@ int rtapi_app_main(void)
     /* allocate shared memory for SAMPLE data */
     ring_sample = hal_malloc(sizeof(sample_t) + howmany_channels * sizeof(hal_float_t));
     if (ring_sample == 0) {
-      rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for pin_sample failed\n");
+      rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for pin_sample struct\n");
       hal_exit(comp_id);
       return -1;
     }
+    /* also allocate memory for sample value array */
+//    ring_sample->value = (hal_float_t **)hal_malloc(howmany_channels * sizeof(hal_float_t*));
+//    if (ring_sample == 0) {
+//      rtapi_print_msg(RTAPI_MSG_ERR, "RINGDELAY: ERROR: hal_malloc() for pin_sample value array\n");
+//      hal_exit(comp_id);
+//      return -1;
+//    }
+
     rtapi_print_msg(RTAPI_MSG_INFO, "RINGDELAY: memory allocated for pin_sample\n");
 
     /* export variables and function for each RINGDELAY loop */
@@ -275,14 +283,44 @@ static void delay(void *arg, long period)
     actual_time++;
 }
 
-/* the delayed_write routine decides to read the "delayed" pointer
-   but only if some constraints are met. If it would do
-   so every servo period, then there would never be a delay
-
-   so first lead the pointer information without changing
-   and then decide if we want to read for real
+/* write_sample_to_ring() will take the pins with the actual value and
+   put them into the ring.
 */
-static void delayed_write(void *arg, long period)
+static int write_sample_to_ring(hal_ringdelay_t * inst)
+{
+    int retval, j;
+    ring_sample->timestamp = actual_time;
+    for (j = 0; j < *(inst->num_of_channels); j++) {
+      ring_sample->value[j] = *(inst->flt_in[j]);
+    }
+    retval = record_write_begin(inst->ring, ring_sample, *(inst->sample_size));
+    if (retval != 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR,
+          "RINGDELAY: %s: ERROR: something went wrong with record_write_begin, returncode: %d\n",
+          comp_id, retval);
+    }
+
+    else{
+        retval = record_write_end(inst->ring, ring_sample, *(inst->sample_size));
+        if (retval != 0) {
+            rtapi_print_msg(RTAPI_MSG_ERR,
+              "RINGDELAY: %s: ERROR: something went wrong with record_write_end, returncode: %d\n",
+              comp_id, retval);
+        }
+    }
+    if (retval == 0) {
+        return 0;
+    }
+    else {
+        rtapi_print_msg(RTAPI_MSG_ERR,
+        "RINGDELAY: %s: ERROR: write_sample_to_ring() failed: %d\n",
+          comp_id, retval);
+        hal_exit(comp_id);
+        return -1;
+    }
+}
+
+static int read_sample_from_ring(hal_ringdelay_t * inst)
 {
 
 }
@@ -374,14 +412,14 @@ static int export_ringdelay(hal_ringdelay_t * inst, char * prefix, int * n)
 
     // export the functions for using in the (servo-)thread
     /* delayed_write function */
-    rtapi_snprintf(buf, sizeof(buf), "%s.write-output", prefix);
-    retval = hal_export_funct(buf, delayed_write, inst, 1, 0, comp_id);
-    if (retval != 0) {
-      rtapi_print_msg(RTAPI_MSG_ERR,
-        "RINGDELAY: ERROR: delayed_write function export failed\n");
-      hal_exit(comp_id);
-      return -1;
-    }
+//    rtapi_snprintf(buf, sizeof(buf), "%s.write-output", prefix);
+//    retval = hal_export_funct(buf, delayed_write, inst, 1, 0, comp_id);
+//    if (retval != 0) {
+//      rtapi_print_msg(RTAPI_MSG_ERR,
+//        "RINGDELAY: ERROR: delayed_write function export failed\n");
+//      hal_exit(comp_id);
+//      return -1;
+//    }
     /* calculate_delay function */
     rtapi_snprintf(buf, sizeof(buf), "%s.delay", prefix);
     retval = hal_export_funct(buf, delay, inst, 1, 0, comp_id);
@@ -398,13 +436,13 @@ static int export_ringdelay(hal_ringdelay_t * inst, char * prefix, int * n)
     if (retval != 0) {
         rtapi_print_msg(RTAPI_MSG_ERR,
         "RINGDELAY: %s: ERROR: hal_ring_attach() failed: %d\n",
-      ringname, retval);
+          ringname, retval);
+        hal_exit(comp_id);
     return -1;
-      }
-
+    }
     /* make a very first write to have something in the buffer to read from */
-
-
+    retval = write_sample_to_ring(inst);
+    /* after this moment there is a record in the ring, with timestamp zero */
 
     /* restore saved message level */
     rtapi_set_msg_level(msg);
