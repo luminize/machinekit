@@ -1,0 +1,11 @@
+bas@debianVM:~/machinekit/src/hal/components$ comp --install ringdelay.c 
+Compiling realtime ringdelay.c
+ringdelay.c: In function ‘write_sample_to_ring’:
+ringdelay.c:296:5: warning: passing argument 2 of ‘record_write_begin’ from incompatible pointer type [enabled by default]
+In file included from /home/bas/machinekit/include/rtapi_global.h:67:0,
+                 from /home/bas/machinekit/include/rtapi.h:92,
+                 from ringdelay.c:8:
+/home/bas/machinekit/include/ring.h:302:19: note: expected ‘void **’ but argument is of type ‘struct sample_t *’
+Linking ringdelay.so
+cp ringdelay.so /home/bas/machinekit/rtlib/posix/
+
