@@ -1,0 +1,26 @@
+# HAL delayline demo
+
+loadrt siggen
+setp siggen.0.frequency 1.0 # Hz
+
+loadrt delayline names=foo,bar delay=500,2500 samples=2,2
+loadusr halscope
+
+net sawtooth siggen.0.sawtooth foo.in0
+net sine     siggen.0.sine     foo.in1
+
+net square   siggen.0.square   bar.in0
+net triangle siggen.0.triangle bar.in1
+
+newthread servo 1000000 fp
+
+addf siggen.0.update servo
+addf foo.sample      servo
+addf bar.sample      servo
+addf foo.output      servo
+addf bar.output      servo
+
+setp foo.enable true
+setp bar.enable true
+
+start
