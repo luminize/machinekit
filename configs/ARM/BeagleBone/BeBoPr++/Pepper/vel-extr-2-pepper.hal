@@ -30,6 +30,7 @@ loadrt [EMCMOT]EMCMOT base_period_nsec=[EMCMOT]BASE_PERIOD servo_period_nsec=[EM
 # load low-level drivers
 loadrt hal_bb_gpio output_pins=107,126,224,226 input_pins=108,109,110,114,117,118
 loadrt [PRUCONF](DRIVER) prucode=$(LINUXCNC_HOME)/[PRUCONF](PRUBIN) [PRUCONF](CONFIG)
+loadrt delayline names=joints_delay delay=300 samples=4
 loadrt pid num_chan=3
 loadrt limit1 count=2
 loadrt pepper
@@ -108,6 +109,10 @@ addf lincurve.0				  servo-thread
 addf conv-s32-float.0			  servo-thread
 addf integ.0				  servo-thread
 addf integ.1				  servo-thread
+addf joints_delay.sample		  servo-thread
+addf joints_delay.output		  servo-thread
+
+setp joints_delay.enable FALSE
 
 # ######################################################
 # Axis-of-motion Specific Configs (not the GUI)
@@ -125,13 +130,17 @@ sets emcmot.00.enable FALSE
 net emcmot.00.enable <= axis.0.amp-enable-out 
 net emcmot.00.enable => [PRUCONF](DRIVER).stepgen.00.enable
 
-
 # position command and feedback
-net emcmot.00.pos-cmd <= axis.0.motor-pos-cmd
-net emcmot.00.pos-cmd => [PRUCONF](DRIVER).stepgen.00.position-cmd
+#net emcmot.00.pos-cmd <= axis.0.motor-pos-cmd
+#net emcmot.00.pos-cmd => [PRUCONF](DRIVER).stepgen.00.position-cmd
+net axis-0-pos <= axis.0.motor-pos-cmd
+net axis-0-pos => joints_delay.in0
+net axis-0-pos => axis.0.motor-pos-fb
 
-net motor.00.pos-fb <= [PRUCONF](DRIVER).stepgen.00.position-fb
-net motor.00.pos-fb => axis.0.motor-pos-fb
+net delayed-joint-0 joints_delay.out0 [PRUCONF](DRIVER).stepgen.00.position-cmd
+
+#net motor.00.pos-fb <= [PRUCONF](DRIVER).stepgen.00.position-fb
+#net motor.00.pos-fb => axis.0.motor-pos-fb
 
 
 # timing parameters
@@ -168,13 +177,18 @@ sets emcmot.01.enable FALSE
 net emcmot.01.enable <= axis.1.amp-enable-out 
 net emcmot.01.enable => [PRUCONF](DRIVER).stepgen.01.enable
 
-
 # position command and feedback
-net emcmot.01.pos-cmd <= axis.1.motor-pos-cmd
-net emcmot.01.pos-cmd => [PRUCONF](DRIVER).stepgen.01.position-cmd
+#net emcmot.01.pos-cmd <= axis.1.motor-pos-cmd
+#net emcmot.01.pos-cmd => [PRUCONF](DRIVER).stepgen.01.position-cmd
 
-net motor.01.pos-fb <= [PRUCONF](DRIVER).stepgen.01.position-fb
-net motor.01.pos-fb => axis.1.motor-pos-fb
+net axis-1-pos <= axis.1.motor-pos-cmd
+net axis-1-pos => joints_delay.in1
+net axis-1-pos => axis.1.motor-pos-fb
+
+net delayed-joint-1 joints_delay.out1 [PRUCONF](DRIVER).stepgen.01.position-cmd
+
+#net motor.01.pos-fb <= [PRUCONF](DRIVER).stepgen.01.position-fb
+#net motor.01.pos-fb => axis.1.motor-pos-fb
 
 
 # timing parameters
@@ -214,11 +228,17 @@ net emcmot.02.enable => [PRUCONF](DRIVER).stepgen.02.enable
 
 
 # position command and feedback
-net emcmot.02.pos-cmd <= axis.2.motor-pos-cmd
-net emcmot.02.pos-cmd => [PRUCONF](DRIVER).stepgen.02.position-cmd
+#net emcmot.02.pos-cmd <= axis.2.motor-pos-cmd
+#net emcmot.02.pos-cmd => [PRUCONF](DRIVER).stepgen.02.position-cmd
 
-net motor.02.pos-fb <= [PRUCONF](DRIVER).stepgen.02.position-fb
-net motor.02.pos-fb => axis.2.motor-pos-fb
+net axis-2-pos <= axis.2.motor-pos-cmd
+net axis-2-pos => joints_delay.in2
+net axis-2-pos => axis.2.motor-pos-fb
+
+net delayed-joint-2 joints_delay.out2 [PRUCONF](DRIVER).stepgen.02.position-cmd
+
+#net motor.02.pos-fb <= [PRUCONF](DRIVER).stepgen.02.position-fb
+#net motor.02.pos-fb => axis.2.motor-pos-fb
 
 
 # timing parameters
@@ -290,7 +310,7 @@ net line-cross-section mult2.0.out => mult2.1.in1
 #multiply area with speed and we get discharge (mm^3 per second)
 #use this one (below when you have a lineardelta type machine
 #net nozzle-vel-cartesian hypot.1.out => mult2.1.in0
-net motion-velocity motion.current-vel mult2.1.in0
+net motion-velocity motion.current-vel mult2.1.in0 joints_delay.in3
 
 #uncomment line below if you have a cartesian type machine
 #net nozzle-vel-cartesian hypot.0.out => mult2.1.in0
