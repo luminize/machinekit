@@ -135,8 +135,13 @@ static void write_sample_to_ring(void *arg, long period)
     hal_delayline_t *hd = rb->scratchpad;    // per-instance HAL data
     sample_t *s;
 
-    if (!*(hd->enable)) // skip if not sampling
+    if (!*(hd->enable)) {	// skip if not sampling, just put the input 
+				//values into the output values
+	for (j = 0; j < hd->nsamples; j++) {
+		*(hd->flt_out[j]) = *(hd->flt_in[j]);
+    	}
 	goto DONE;
+    }
 
     // use non-copying write:
     // allocate space in the ringbuffer and retrieve a pointer to it
