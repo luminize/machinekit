@@ -386,18 +386,18 @@ net extruder-speed mux4.0.out lincurve.0.in integ.0.in
 # output offset position in mm filament
 
 setp lincurve.0.x-val-00 0.0
-setp lincurve.0.x-val-01 0.0005
-setp lincurve.0.x-val-02 1
+setp lincurve.0.x-val-01 0.45
+setp lincurve.0.x-val-02 1.2
 setp lincurve.0.x-val-03 2
-setp lincurve.0.x-val-04 3
-setp lincurve.0.x-val-05 4
+setp lincurve.0.x-val-04 30
+setp lincurve.0.x-val-05 40
 
-setp lincurve.0.y-val-00 0.00
-setp lincurve.0.y-val-01 0.01
-setp lincurve.0.y-val-02 0.07
-setp lincurve.0.y-val-03 0.18
-setp lincurve.0.y-val-04 0.24
-setp lincurve.0.y-val-05 0.3
+setp lincurve.0.y-val-00 -0.085
+setp lincurve.0.y-val-01 0.0
+setp lincurve.0.y-val-02 0.072
+setp lincurve.0.y-val-03 0.16
+setp lincurve.0.y-val-04 0.16
+setp lincurve.0.y-val-05 0.16
 
 # lincurve.0.out will give an offset. For the PID loop this
 # offset must be added to the integrand of the speed (area under
