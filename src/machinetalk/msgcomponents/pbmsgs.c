@@ -74,6 +74,11 @@ PB_DESCRIPTOR(LogMessage);
 /* PB_DESCRIPTOR(Test2); */
 /* PB_DESCRIPTOR(Test3); */
 
+
+PB_DESCRIPTOR(JplanJoint);
+PB_DESCRIPTOR(JplanCommand);
+
+
 // this likely supersedes the above exports, as it
 // contains a superset of pb_<message>_fields
 msginfo_t msginfo[] = {
@@ -91,6 +96,7 @@ msginfo_t msginfo[] = {
     TEST_MESSAGES	   \
     TYPES_MESSAGES	   \
     VALUE_MESSAGES	   \
+    JPLAN_MESSAGES	   \
     PB_MSGINFO_DELIMITER
 };
 

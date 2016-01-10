@@ -26,6 +26,8 @@ pbmsgs-objs := \
 	$(PBGEN)/$(NAMESPACEDIR)/status.npb.o \
 	$(PBGEN)/$(NAMESPACEDIR)/value.npb.o
 
+obj-m += ringload.o
+ringload-objs := $(MSGCOMP_DIR)/ringload.o
 
 obj-m += pbring.o
 pbring-objs := $(MSGCOMP_DIR)/pbring.o
