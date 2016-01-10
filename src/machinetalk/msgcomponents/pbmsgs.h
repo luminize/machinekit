@@ -30,6 +30,7 @@ typedef struct {
 #include <machinetalk/generated/message.npb.h>
 #include <machinetalk/generated/value.npb.h>
 #include <machinetalk/generated/test.npb.h>
+#include <machinetalk/generated/jplan.npb.h>
 
 
 #endif // _PBMSGS_H
