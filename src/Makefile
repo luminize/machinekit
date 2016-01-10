@@ -1467,6 +1467,9 @@ motmod-objs += libnml/posemath/sincos.o $(MATHSTUB)
 obj-m += icomp.o
 icomp-objs := hal/icomp-example/icomp.o
 
+obj-m += jplan.o
+jplan-objs := hal/jplanner/jplan.o
+
 # clashes with component in i_components
 #obj-m += lutn.o
 #lutn-objs := hal/icomp-example/lutn.o
@@ -1653,6 +1656,7 @@ $(RTLIBDIR)/tp$(MODULE_EXT): $(addprefix $(OBJDIR)/,$(tp-objs))
 $(RTLIBDIR)/ufdemo$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(ufdemo-objs))
 $(RTLIBDIR)/icomp$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(icomp-objs))
 $(RTLIBDIR)/lutn$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(lutn-objs))
+$(RTLIBDIR)/jplan$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(jplan-objs))
 
 ifeq ($(TRIVIAL_BUILD),no)
 READ_RTDEPS = $(wildcard $(RTDEPS))
