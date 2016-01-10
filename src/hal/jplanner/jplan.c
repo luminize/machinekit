@@ -21,9 +21,9 @@ static int comp_id;
 static char *compname = "jplan";
 
 struct joint {
-    hal_float_t * pos_cmd;	// position command
-    hal_float_t * max_vel;	// velocity limit
-    hal_float_t * max_acc;	// acceleration limit
+    hal_float_t *pos_cmd;	// position command
+    hal_float_t *max_vel;	// velocity limit
+    hal_float_t *max_acc;	// acceleration limit
 
     hal_float_t *curr_pos;	// current position
     hal_float_t *curr_vel;	// current velocity
@@ -191,17 +191,20 @@ static int instantiate_jplan(const char *name,
     // attach the command ringbuffer '<instancename>.cmd' if it exists
     // must be record mode
     unsigned flags;
+    bool queued = 0;
     if (!hal_ring_attachf(&(ip->jcmd), &flags,  "%s.cmd", name)) {
 	if ((flags & RINGTYPE_MASK) != RINGTYPE_RECORD) {
 	    HALERR("ring %s.cmd not a record mode ring: mode=%d",name, flags & RINGTYPE_MASK);
 	    return -EINVAL;
 	}
 	ip->jcmd.header->reader = inst_id; // we're the reader - advisory
+	if (hal_pin_u32_newf(HAL_OUT, &(ip->commands), inst_id, "%s.commands", name))
+	    return -1;
+	queued = 1;
     }
 
     // aggregate joint status, 'or' of all <joints>.active
-    if (hal_pin_bit_newf(HAL_OUT, &(ip->joints_active), inst_id, "%s.joints-active", name) ||
-	hal_pin_u32_newf(HAL_OUT, &(ip->commands), inst_id, "%s.commands", name))
+    if (hal_pin_bit_newf(HAL_OUT, &(ip->joints_active), inst_id, "%s.joints-active", name))
 	return -1;
 
     // per-joint objects
@@ -213,7 +216,8 @@ static int instantiate_jplan(const char *name,
 	    hal_pin_float_newf(HAL_OUT, &(jp->curr_vel), inst_id, "%s.%d.curr-vel", name, i))
 	    return -1;
 
-	if (hal_pin_float_newf(HAL_IO, &(jp->pos_cmd), inst_id, "%s.%d.pos-cmd", name, i) ||
+	hal_pin_dir_t dir = queued ? HAL_OUT : HAL_IO;
+	if (hal_pin_float_newf(dir,    &(jp->pos_cmd), inst_id, "%s.%d.pos-cmd", name, i) ||
 	    hal_pin_float_newf(HAL_IO, &(jp->max_vel), inst_id, "%s.%d.max-vel", name, i) ||
 	    hal_pin_float_newf(HAL_IO, &(jp->max_acc), inst_id, "%s.%d.max-acc", name, i))
 	    return -1;
