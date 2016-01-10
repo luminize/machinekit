@@ -1,1 +1,4 @@
 A joint planner, based on src/emc/motion/simple_tp.*
+
+can take commands from a ringbuffer, or HAL pins
+
