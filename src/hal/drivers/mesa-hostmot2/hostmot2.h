@@ -676,17 +676,16 @@ typedef struct {
             hal_bit_t *enable;
             hal_bit_t *control_type;  // 0="position control", 1="velocity control"
 
-            hal_float_t position_scale;
-            hal_float_t maxvel;
-            hal_float_t maxaccel;
+            hal_float_t *position_scale;
+            hal_float_t *maxvel;
+            hal_float_t *maxaccel;
 
-            hal_u32_t steplen;
-            hal_u32_t stepspace;
-            hal_u32_t dirsetup;
-            hal_u32_t dirhold;
+            hal_u32_t *steplen;
+            hal_u32_t *stepspace;
+            hal_u32_t *dirsetup;
+            hal_u32_t *dirhold;
 
-            hal_u32_t step_type;
-            hal_u32_t table[5]; // the Fifth Element is used as a very crude hash
+            hal_u32_t *step_type;
 
 	    // debug pins
 	    hal_float_t *dbg_ff_vel;
@@ -697,6 +696,10 @@ typedef struct {
 	    hal_float_t *dbg_pos_minus_prev_cmd;
 
 	} pin;
+
+  struct {
+      hal_u32_t table[5]; // the Fifth Element is used as a very crude hash
+  } param;
 
     } hal;
 
