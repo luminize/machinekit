@@ -1510,6 +1510,9 @@ icomp-objs := hal/icomp-example/icomp.o
 obj-m += jplan.o
 jplan-objs := hal/jplanner/jplan.o
 
+obj-m += interpolate.o
+interpolate-objs := hal/interpolator/interpolate.o
+
 # clashes with component in i_components
 obj-m += lutn-demo.o
 lutn-demo-objs := hal/icomp-example/lutn-demo.o
@@ -1776,6 +1779,7 @@ $(RTLIBDIR)/icomp$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(icomp-objs))
 $(RTLIBDIR)/lutn-demo$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(lutn-demo-objs))
 $(RTLIBDIR)/lutn$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(lutn-objs))
 $(RTLIBDIR)/jplan$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(jplan-objs))
+$(RTLIBDIR)/interpolate$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(interpolate-objs))
 
 ifeq ($(TRIVIAL_BUILD),no)
 READ_RTDEPS = $(wildcard $(RTDEPS))
