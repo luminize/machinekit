@@ -31,6 +31,7 @@ typedef struct {
 #include <machinetalk/generated/value.npb.h>
 #include <machinetalk/generated/test.npb.h>
 #include <machinetalk/generated/jplan.npb.h>
+#include <machinetalk/generated/ros.npb.h>
 
 
 #endif // _PBMSGS_H

@@ -25,6 +25,7 @@ pbmsgs-objs := \
 	$(PBGEN)/preview.npb.o \
 	$(PBGEN)/status.npb.o \
 	$(PBGEN)/jplan.npb.o \
+	$(PBGEN)/ros.npb.o \
 	$(PBGEN)/value.npb.o
 
 obj-m += ringload.o
