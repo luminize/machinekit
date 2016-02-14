@@ -1,0 +1,56 @@
+//   This is a component for EMC2 HAL
+//   Copyright 2006 Jeff Epler <jepler@unpythonic.net>
+//
+//   This program is free software; you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation; either version 2 of the License, or
+//   (at your option) any later version.
+//
+//   This program is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with this program; if not, write to the Free Software
+//   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+component offsetn "Adds an offset to an input, and subtracts it from the feedback value";
+
+pin in float #.offset[pincount] "The offset value";
+
+pin in float #.in[pincount] "The input value";
+pin out float #.out[pincount] "The output value";
+
+pin in float #.fb_in[pincount] "The feedback input value";
+pin out float #.fb_out[pincount] "The feedback output value";
+
+// default to single, same as legacy component
+instanceparam int pincount = 1;
+
+option MAXCOUNT 8;
+
+function update_output "Updated the output value by adding the offset to the input";
+function update_feedback "Update the feedback value by subtracting the offset from the feedback";
+
+license "GPL";
+;;
+
+FUNCTION(update_feedback)
+{
+hal_s32_t n;
+
+	for (n = 0; n < local_pincount; n++)
+		_fb_out(n) = _fb_in(n) - _offset(n);
+
+return 0;
+}
+
+FUNCTION(update_output)
+{
+hal_s32_t n;
+
+	for (n = 0; n < local_pincount; n++)
+		_out(n) = _in(n) + _offset(n);
+
+return 0;
+}
