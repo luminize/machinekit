@@ -168,10 +168,18 @@ static int update(void *arg, const hal_funct_args_t *fa)
 		}
 	    }
 	    record_shift(&ip->traj);   // consume record
-	}
-    } else {
-	// not moving: fine
-	// moving and no new segment: add a decel to stop here.?
+	} else {
+        // segment completed and no new point in ringbuffer
+        for (i = 0; i < ip->count; i++) {
+            struct joint *jp = &ip->joints[i];
+            jp->coeff[0] = *(jp->end_pos);
+            jp->coeff[1] = 0.0;
+            jp->coeff[2] = 0.0;
+            jp->coeff[3] = 0.0;
+            jp->coeff[4] = 0.0;
+            jp->coeff[5] = 0.0;
+        }
+    }
     }
 
     *(ip->progress) += period;
