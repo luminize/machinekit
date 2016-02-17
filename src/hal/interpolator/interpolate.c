@@ -223,8 +223,12 @@ static int instantiate_interpolate(const char *name,
 	hal_pin_float_newf(HAL_OUT, &(ip->duration), inst_id, "%s.duration", name) ||
 	hal_pin_float_newf(HAL_OUT, &(ip->progress), inst_id, "%s.progress", name))
 	return -1;
-    *(ip->degree) = 1; 
-
+    *(ip->serial) = 0;
+    *(ip->degree) = 1;
+    *(ip->jitter_correct) = 0;
+    *(ip->epsilon) = 0;
+    *(ip->duration) = 0;
+    *(ip->progress) = 0;
     // per-joint objects
     for (i = 0; i < ip->count; i++) {
 	struct joint *jp = &ip->joints[i];
@@ -235,6 +239,13 @@ static int instantiate_interpolate(const char *name,
 	    hal_pin_float_newf(HAL_OUT, &(jp->curr_vel), inst_id, "%s.%d.curr-vel", name, i) ||
 	    hal_pin_float_newf(HAL_OUT, &(jp->curr_acc), inst_id, "%s.%d.curr-acc", name, i))
 	    return -1;
+        // set all pin values to zero
+        *(jp->end_pos) = 0;
+        *(jp->end_vel) = 0;
+        *(jp->end_acc) = 0;
+        *(jp->curr_pos) = 0;
+        *(jp->curr_vel) = 0;
+        *(jp->curr_acc) = 0;
     }
     hal_export_xfunct_args_t xfunct_args = {
         .type = FS_XTHREADFUNC,
