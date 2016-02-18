@@ -61,7 +61,7 @@ static inline void generatePowers(int n, double x, double* powers)
     int i;
     powers[0] = 1.0;
     for (i = 1; i <= n; i++)
-	powers[i] = powers[i-1]*x;
+		powers[i] = powers[i-1]*x;
 }
 
 static int interpolate_joint(struct inst_data *ip,
@@ -72,33 +72,32 @@ static int interpolate_joint(struct inst_data *ip,
     double vel = 0.0;
     double acc = 0.0;
     switch (*(ip->degree)) {
-
     case 5:
-	pos += ip->pnow[4] * jp->coeff[4];
-	pos += ip->pnow[5] * jp->coeff[5];
-	vel += 4.0 * ip->pnow[3] * jp->coeff[4] +
-	    5.0 * ip->pnow[4] * jp->coeff[5];
+		pos += ip->pnow[4] * jp->coeff[4];
+		pos += ip->pnow[5] * jp->coeff[5];
+		vel += 4.0 * ip->pnow[3] * jp->coeff[4] +
+		    5.0 * ip->pnow[4] * jp->coeff[5];
 
-	acc += 12.0 * ip->pnow[2] * jp->coeff[4] +
-	    20.0 * ip->pnow[3] * jp->coeff[5];
+		acc += 12.0 * ip->pnow[2] * jp->coeff[4] +
+		    20.0 * ip->pnow[3] * jp->coeff[5];
     case 3:
-	pos += ip->pnow[2] * jp->coeff[2];
-	pos += ip->pnow[3] * jp->coeff[3];
+		pos += ip->pnow[2] * jp->coeff[2];
+		pos += ip->pnow[3] * jp->coeff[3];
 
-	vel += 2.0 * ip->pnow[1] * jp->coeff[2] +
-	    3.0 * ip->pnow[2] * jp->coeff[3];
+		vel += 2.0 * ip->pnow[1] * jp->coeff[2] +
+		    3.0 * ip->pnow[2] * jp->coeff[3];
 
-	acc += 2.0 * ip->pnow[0] * jp->coeff[2] +
-	    6.0 * ip->pnow[1] * jp->coeff[3];
+		acc += 2.0 * ip->pnow[0] * jp->coeff[2] +
+		    6.0 * ip->pnow[1] * jp->coeff[3];
     case 1:
-	pos += ip->pnow[0] * jp->coeff[0];
-	pos += ip->pnow[1] * jp->coeff[1];
+		pos += ip->pnow[0] * jp->coeff[0];
+		pos += ip->pnow[1] * jp->coeff[1];
 
-	vel += ip->pnow[0] * jp->coeff[1];
-    }
-    *(jp->curr_pos) = pos;
-    *(jp->curr_vel) = vel;
-    *(jp->curr_acc) = acc;
+		vel += ip->pnow[0] * jp->coeff[1];
+	    }
+	    *(jp->curr_pos) = pos;
+	    *(jp->curr_vel) = vel;
+	    *(jp->curr_acc) = acc;
     return 0;
 }
 
@@ -111,121 +110,109 @@ static int update(void *arg, const hal_funct_args_t *fa)
 
     int i;
     if (segment_completed(ip, period)) {
-    rtapi_print_msg(RTAPI_MSG_DBG,
-			"interpolator: segment completed\n");//,
-//			cname, nr_of_samples, n);
-//
-	// check for a new JointTrajectoryPoint
-	void *data;
-	size_t size;
-	if (record_read(&ip->traj, (const void**)&data, &size) == 0) {
+		// check for a new JointTrajectoryPoint
+		void *data;
+		size_t size;
+		if (record_read(&ip->traj, (const void**)&data, &size) == 0) {
 
-	    // protobuf-decode it
-	    pb_istream_t stream = pb_istream_from_buffer(data, size);
-	    pb_JointTrajectoryPoint rx =  pb_JointTrajectoryPoint_init_zero;
-	    if (!pb_decode(&stream, pb_JointTrajectoryPoint_fields, &rx)) {
-		rtapi_print_msg(RTAPI_MSG_ERR, "%s: pb_decode(JointTrajectoryPoint) failed: '%s'",
-				compname, PB_GET_ERROR(&stream));
-	    } else {
-		// decode ok - start a new segment
-		double duration = *(ip->duration) = rx.time_from_start - ip->time_from_start;
-        // the very first point in the ringbuffer is not a segment.
-        // therefore we need to "jump" to these initial settings for the
-        // interpolator to calculate the correct path.
-        // for example, a path can start at position, velocity and acceleration
-        // who are non-zero. In a typical ROS message the first point has a
-        // duration of "0.0"
-        if (duration == 0.0) {
-            // set the start positions
-            // or try out to drop this point later on
-            for (i = 0; i < ip->count; i++) {
-                struct joint *jp = &ip->joints[i];
-                *(jp->curr_pos) = *(jp->end_pos) = rx.positions[i];
-                *(jp->curr_vel) = *(jp->end_vel) = rx.velocities[i];
-                *(jp->curr_acc) = *(jp->end_acc) = rx.accelerations[i];
-                jp->coeff[0] = *(jp->end_pos);
-                jp->coeff[1] = 0.0;
-                jp->coeff[2] = 0.0;
-                jp->coeff[3] = 0.0;
-                jp->coeff[4] = 0.0;
-                jp->coeff[5] = 0.0;
-            }
-        }
-        // so when we have read the first point, we need to discard everythin
-        // else and make sure we will read the second point, as to complete the
-        // first segment
-        else {
-		generatePowers(*(ip->degree), duration, ip->powers);
-		ip->time_from_start =  rx.time_from_start;
-		*(ip->progress) = 0.0;
-		for (i = 0; i < rx.positions_count; i++) {
-		    struct joint *jp = &ip->joints[i];
-		    double pos2 = *(jp->end_pos) = rx.positions[i];
-		    double vel2 = *(jp->end_vel) = rx.velocities[i];
-		    double acc2 = *(jp->end_acc) = rx.accelerations[i];
-            double pos1 = *(jp->curr_pos);
-            double vel1 = *(jp->curr_vel);
-            double acc1 = *(jp->curr_acc);
-            // for the first point in a path, the current position should match
-            // the position value in that point
-//            if (rx.time_from_start == 0.0) {
-//                pos1 = pos2; //*(jp->curr_pos) = *(jp->end_pos);
-//    		    vel1 = vel2; //*(jp->curr_vel) = *(jp->end_vel);
-//    		    acc1 = acc1; //*(jp->curr_acc) = *(jp->end_vel);
-//            }
-		    switch (*(ip->degree)) {
-		    case 1:
-			jp->coeff[0] = pos1;
-			jp->coeff[1] = (pos2 - pos1) / duration;
-			jp->coeff[2] = 0.0;
-			jp->coeff[3] = 0.0;
-			jp->coeff[4] = 0.0;
-			jp->coeff[5] = 0.0;
-			break;
-		    case 3:
-			jp->coeff[0] = pos1;
-			jp->coeff[1] = vel1;
-			jp->coeff[2] = (-3.0*pos1 + 3.0*pos2 - 2.0*vel1*ip->powers[1] - vel2*ip->powers[1]) / ip->powers[2];
-			jp->coeff[3] = (2.0*pos1 - 2.0*pos2 + vel1*ip->powers[1] + vel2*ip->powers[1]) / ip->powers[3];
-			jp->coeff[4] = 0.0;
-			jp->coeff[5] = 0.0;
-			break;
-		    case 5:
-			jp->coeff[0] = pos1;
-			jp->coeff[1] = vel1;
-			jp->coeff[2] = 0.5 * acc1;
-			jp->coeff[3] =  (-20.0*pos1 + 20.0*pos2 - 3.0*acc1*ip->powers[2] + acc2*ip->powers[2] -
-					 12.0*vel1*ip->powers[1] - 8.0*vel2*ip->powers[1]) / (2.0*ip->powers[3]);
-			jp->coeff[4] =  (30.0*pos1 - 30.0*pos2 + 3.0*acc1*ip->powers[2] - 2.0*acc2*ip->powers[2] +
-					 16.0*vel1*ip->powers[1] + 14.0*vel2*ip->powers[1]) / (2.0*ip->powers[4]);
-			jp->coeff[5] =  (-12.0*pos1 + 12.0*pos2 - acc1*ip->powers[2] + acc2*ip->powers[2] -
-					 6.0*vel1*ip->powers[1] - 6.0*vel2*ip->powers[1]) / (2.0*ip->powers[5]);
-			break;
+		    // protobuf-decode it
+		    pb_istream_t stream = pb_istream_from_buffer(data, size);
+		    pb_JointTrajectoryPoint rx =  pb_JointTrajectoryPoint_init_zero;
+		    if (!pb_decode(&stream, pb_JointTrajectoryPoint_fields, &rx)) {
+				rtapi_print_msg(RTAPI_MSG_ERR, "%s: pb_decode(JointTrajectoryPoint) failed: '%s'",
+					compname, PB_GET_ERROR(&stream));
+		    } else {
+			// decode ok - start a new segment
+				double duration = *(ip->duration) = rx.time_from_start - ip->time_from_start;
+	            // the very first point in the ringbuffer is not a segment.
+	            // therefore we need to "jump" to these initial settings for the
+	            // interpolator to calculate the correct path.
+	            // for example, a path can start at position, velocity and acceleration
+	            // who are non-zero. In a typical ROS message the first point has a
+	            // duration of "0.0"
+	            if (duration == 0.0) {
+	                // set the start positions
+	                // or try out to drop this point later on
+	                for (i = 0; i < ip->count; i++) {
+	                    struct joint *jp = &ip->joints[i];
+	                    *(jp->curr_pos) = *(jp->end_pos) = rx.positions[i];
+	                    *(jp->curr_vel) = *(jp->end_vel) = rx.velocities[i];
+	                    *(jp->curr_acc) = *(jp->end_acc) = rx.accelerations[i];
+	                    jp->coeff[0] = *(jp->end_pos);
+	                    jp->coeff[1] = 0.0;
+	                    jp->coeff[2] = 0.0;
+	                    jp->coeff[3] = 0.0;
+	                    jp->coeff[4] = 0.0;
+	                    jp->coeff[5] = 0.0;
+	                }
+	                // so when we have read the first point, we need to discard everythin
+	                // else and make sure we will read the second point, as to complete the
+	                // first segment
+	            } else {
+				    generatePowers(*(ip->degree), duration, ip->powers);
+	                ip->time_from_start =  rx.time_from_start;
+	                *(ip->progress) = 0.0;
+	                for (i = 0; i < rx.positions_count; i++) {
+			            struct joint *jp = &ip->joints[i];
+			            double pos2 = *(jp->end_pos) = rx.positions[i];
+			    		double vel2 = *(jp->end_vel) = rx.velocities[i];
+			    		double acc2 = *(jp->end_acc) = rx.accelerations[i];
+	                    double pos1 = *(jp->curr_pos);
+	                    double vel1 = *(jp->curr_vel);
+	                    double acc1 = *(jp->curr_acc);
+					    switch (*(ip->degree)) {
+					    case 1:
+							jp->coeff[0] = pos1;
+							jp->coeff[1] = (pos2 - pos1) / duration;
+							jp->coeff[2] = 0.0;
+							jp->coeff[3] = 0.0;
+							jp->coeff[4] = 0.0;
+							jp->coeff[5] = 0.0;
+						break;
+					    case 3:
+							jp->coeff[0] = pos1;
+							jp->coeff[1] = vel1;
+							jp->coeff[2] = (-3.0*pos1 + 3.0*pos2 - 2.0*vel1*ip->powers[1] - vel2*ip->powers[1]) / ip->powers[2];
+							jp->coeff[3] = (2.0*pos1 - 2.0*pos2 + vel1*ip->powers[1] + vel2*ip->powers[1]) / ip->powers[3];
+							jp->coeff[4] = 0.0;
+							jp->coeff[5] = 0.0;
+						break;
+					    case 5:
+							jp->coeff[0] = pos1;
+							jp->coeff[1] = vel1;
+							jp->coeff[2] = 0.5 * acc1;
+							jp->coeff[3] =  (-20.0*pos1 + 20.0*pos2 - 3.0*acc1*ip->powers[2] + acc2*ip->powers[2] -
+									 12.0*vel1*ip->powers[1] - 8.0*vel2*ip->powers[1]) / (2.0*ip->powers[3]);
+							jp->coeff[4] =  (30.0*pos1 - 30.0*pos2 + 3.0*acc1*ip->powers[2] - 2.0*acc2*ip->powers[2] +
+									 16.0*vel1*ip->powers[1] + 14.0*vel2*ip->powers[1]) / (2.0*ip->powers[4]);
+							jp->coeff[5] =  (-12.0*pos1 + 12.0*pos2 - acc1*ip->powers[2] + acc2*ip->powers[2] -
+									 6.0*vel1*ip->powers[1] - 6.0*vel2*ip->powers[1]) / (2.0*ip->powers[5]);
+						break;
+					    }
+					}
+	        	}
 		    }
-		}
-        }
+		    record_shift(&ip->traj);   // consume record
+		} else {
+	        // segment completed and no new point in ringbuffer
+	        for (i = 0; i < ip->count; i++) {
+	            struct joint *jp = &ip->joints[i];
+	            jp->coeff[0] = *(jp->end_pos);
+	            jp->coeff[1] = 0.0;
+	            jp->coeff[2] = 0.0;
+	            jp->coeff[3] = 0.0;
+	            jp->coeff[4] = 0.0;
+	            jp->coeff[5] = 0.0;
+	        }
 	    }
-	    record_shift(&ip->traj);   // consume record
-	} else {
-        // segment completed and no new point in ringbuffer
-        for (i = 0; i < ip->count; i++) {
-            struct joint *jp = &ip->joints[i];
-            jp->coeff[0] = *(jp->end_pos);
-            jp->coeff[1] = 0.0;
-            jp->coeff[2] = 0.0;
-            jp->coeff[3] = 0.0;
-            jp->coeff[4] = 0.0;
-            jp->coeff[5] = 0.0;
-        }
-    }
     }
 
     *(ip->progress) += period;
 
     generatePowers(*(ip->degree), *(ip->progress), ip->pnow);
     for (i = 0; i < ip->count; i++) {
-	struct joint *jp = &ip->joints[i];
-	interpolate_joint(ip, jp, *(ip->progress), 0);
+		struct joint *jp = &ip->joints[i];
+		interpolate_joint(ip, jp, *(ip->progress), 0);
     }
     return 0;
 }
@@ -251,24 +238,24 @@ static int instantiate_interpolate(const char *name,
     // must be record mode
     unsigned flags;
     if (!hal_ring_attachf(&(ip->traj), &flags,  "%s.traj", name)) {
-	if ((flags & RINGTYPE_MASK) != RINGTYPE_RECORD) {
-	    HALERR("ring %s.traj not a record mode ring: mode=%d",name, flags & RINGTYPE_MASK);
-	    return -EINVAL;
-	}
-	ip->traj.header->reader = inst_id; // we're the reader - advisory
+		if ((flags & RINGTYPE_MASK) != RINGTYPE_RECORD) {
+		    HALERR("ring %s.traj not a record mode ring: mode=%d",name, flags & RINGTYPE_MASK);
+		    return -EINVAL;
+		}
+		ip->traj.header->reader = inst_id; // we're the reader - advisory
     } else {
-	HALERR("ring %s.traj does not exist", name);
-	return -EINVAL;
+		HALERR("ring %s.traj does not exist", name);
+		return -EINVAL;
     }
 
     // per-instance objects
     if (hal_pin_s32_newf(HAL_OUT, &(ip->serial), inst_id, "%s.serial", name) ||
-	hal_pin_u32_newf(HAL_IN, &(ip->degree), inst_id, "%s.degree", name) ||
-	hal_pin_bit_newf(HAL_IN, &(ip->jitter_correct), inst_id, "%s.jitter-correct", name) ||
-	hal_pin_float_newf(HAL_IN, &(ip->epsilon), inst_id, "%s.epsilon", name) ||
-	hal_pin_float_newf(HAL_OUT, &(ip->duration), inst_id, "%s.duration", name) ||
-	hal_pin_float_newf(HAL_OUT, &(ip->progress), inst_id, "%s.progress", name))
-	return -1;
+		hal_pin_u32_newf(HAL_IN, &(ip->degree), inst_id, "%s.degree", name) ||
+		hal_pin_bit_newf(HAL_IN, &(ip->jitter_correct), inst_id, "%s.jitter-correct", name) ||
+		hal_pin_float_newf(HAL_IN, &(ip->epsilon), inst_id, "%s.epsilon", name) ||
+		hal_pin_float_newf(HAL_OUT, &(ip->duration), inst_id, "%s.duration", name) ||
+		hal_pin_float_newf(HAL_OUT, &(ip->progress), inst_id, "%s.progress", name))
+		return -1;
     *(ip->serial) = 0;
     *(ip->degree) = 1;
     *(ip->jitter_correct) = 0;
@@ -278,14 +265,14 @@ static int instantiate_interpolate(const char *name,
     ip->time_from_start = 0;
     // per-joint objects
     for (i = 0; i < ip->count; i++) {
-	struct joint *jp = &ip->joints[i];
-	if (hal_pin_float_newf(HAL_OUT, &(jp->end_pos), inst_id, "%s.%d.end-pos", name, i) ||
-	    hal_pin_float_newf(HAL_OUT, &(jp->end_vel), inst_id, "%s.%d.end-vel", name, i) ||
-	    hal_pin_float_newf(HAL_OUT, &(jp->end_acc), inst_id, "%s.%d.end-acc", name, i) ||
-	    hal_pin_float_newf(HAL_OUT, &(jp->curr_pos), inst_id, "%s.%d.curr-pos", name, i) ||
-	    hal_pin_float_newf(HAL_OUT, &(jp->curr_vel), inst_id, "%s.%d.curr-vel", name, i) ||
-	    hal_pin_float_newf(HAL_OUT, &(jp->curr_acc), inst_id, "%s.%d.curr-acc", name, i))
-	    return -1;
+		struct joint *jp = &ip->joints[i];
+		if (hal_pin_float_newf(HAL_OUT, &(jp->end_pos), inst_id, "%s.%d.end-pos", name, i) ||
+		    hal_pin_float_newf(HAL_OUT, &(jp->end_vel), inst_id, "%s.%d.end-vel", name, i) ||
+		    hal_pin_float_newf(HAL_OUT, &(jp->end_acc), inst_id, "%s.%d.end-acc", name, i) ||
+		    hal_pin_float_newf(HAL_OUT, &(jp->curr_pos), inst_id, "%s.%d.curr-pos", name, i) ||
+		    hal_pin_float_newf(HAL_OUT, &(jp->curr_vel), inst_id, "%s.%d.curr-vel", name, i) ||
+		    hal_pin_float_newf(HAL_OUT, &(jp->curr_acc), inst_id, "%s.%d.curr-acc", name, i))
+		    return -1;
         // set all pin values to zero
         *(jp->end_pos) = 0;
         *(jp->end_vel) = 0;
