@@ -111,6 +111,10 @@ static int update(void *arg, const hal_funct_args_t *fa)
 
     int i;
     if (segment_completed(ip, period)) {
+    rtapi_print_msg(RTAPI_MSG_DBG,
+			"interpolator: segment completed\n");//,
+//			cname, nr_of_samples, n);
+//
 	// check for a new JointTrajectoryPoint
 	void *data;
 	size_t size;
@@ -125,6 +129,32 @@ static int update(void *arg, const hal_funct_args_t *fa)
 	    } else {
 		// decode ok - start a new segment
 		double duration = *(ip->duration) = rx.time_from_start - ip->time_from_start;
+        // the very first point in the ringbuffer is not a segment.
+        // therefore we need to "jump" to these initial settings for the
+        // interpolator to calculate the correct path.
+        // for example, a path can start at position, velocity and acceleration
+        // who are non-zero. In a typical ROS message the first point has a
+        // duration of "0.0"
+        if (duration == 0.0) {
+            // set the start positions
+            // or try out to drop this point later on
+            for (i = 0; i < ip->count; i++) {
+                struct joint *jp = &ip->joints[i];
+                *(jp->curr_pos) = *(jp->end_pos) = rx.positions[i];
+                *(jp->curr_vel) = *(jp->end_vel) = rx.velocities[i];
+                *(jp->curr_acc) = *(jp->end_acc) = rx.accelerations[i];
+                jp->coeff[0] = *(jp->end_pos);
+                jp->coeff[1] = 0.0;
+                jp->coeff[2] = 0.0;
+                jp->coeff[3] = 0.0;
+                jp->coeff[4] = 0.0;
+                jp->coeff[5] = 0.0;
+            }
+        }
+        // so when we have read the first point, we need to discard everythin
+        // else and make sure we will read the second point, as to complete the
+        // first segment
+        else {
 		generatePowers(*(ip->degree), duration, ip->powers);
 		ip->time_from_start =  rx.time_from_start;
 		*(ip->progress) = 0.0;
@@ -133,9 +163,16 @@ static int update(void *arg, const hal_funct_args_t *fa)
 		    double pos2 = *(jp->end_pos) = rx.positions[i];
 		    double vel2 = *(jp->end_vel) = rx.velocities[i];
 		    double acc2 = *(jp->end_acc) = rx.accelerations[i];
-		    double pos1 = *(jp->curr_pos);
-		    double vel1 = *(jp->curr_vel);
-		    double acc1 = *(jp->curr_acc);
+            double pos1 = *(jp->curr_pos);
+            double vel1 = *(jp->curr_vel);
+            double acc1 = *(jp->curr_acc);
+            // for the first point in a path, the current position should match
+            // the position value in that point
+//            if (rx.time_from_start == 0.0) {
+//                pos1 = pos2; //*(jp->curr_pos) = *(jp->end_pos);
+//    		    vel1 = vel2; //*(jp->curr_vel) = *(jp->end_vel);
+//    		    acc1 = acc1; //*(jp->curr_acc) = *(jp->end_vel);
+//            }
 		    switch (*(ip->degree)) {
 		    case 1:
 			jp->coeff[0] = pos1;
@@ -166,6 +203,7 @@ static int update(void *arg, const hal_funct_args_t *fa)
 			break;
 		    }
 		}
+        }
 	    }
 	    record_shift(&ip->traj);   // consume record
 	} else {
@@ -237,6 +275,7 @@ static int instantiate_interpolate(const char *name,
     *(ip->epsilon) = 0;
     *(ip->duration) = 0;
     *(ip->progress) = 0;
+    ip->time_from_start = 0;
     // per-joint objects
     for (i = 0; i < ip->count; i++) {
 	struct joint *jp = &ip->joints[i];
