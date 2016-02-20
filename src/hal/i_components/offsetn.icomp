@@ -27,7 +27,7 @@ pin out float #.fb_out[pincount] "The feedback output value";
 // default to single, same as legacy component
 instanceparam int pincount = 1;
 
-option MAXCOUNT 8;
+option MAXCOUNT 9;
 
 function update_output "Updated the output value by adding the offset to the input";
 function update_feedback "Update the feedback value by subtracting the offset from the feedback";
@@ -39,7 +39,7 @@ FUNCTION(update_feedback)
 {
 hal_s32_t n;
 
-	for (n = 0; n < local_pincount; n++)
+	for (n = 0; n < pincount; n++)
 		_fb_out(n) = _fb_in(n) - _offset(n);
 
 return 0;
@@ -49,7 +49,7 @@ FUNCTION(update_output)
 {
 hal_s32_t n;
 
-	for (n = 0; n < local_pincount; n++)
+	for (n = 0; n < pincount; n++)
 		_out(n) = _in(n) + _offset(n);
 
 return 0;
