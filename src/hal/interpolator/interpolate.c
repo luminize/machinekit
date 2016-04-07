@@ -29,6 +29,8 @@ struct joint {
     hal_float_t *curr_vel;	// current velocity
     hal_float_t *curr_acc;	// current acceleration
 
+	hal_bit_t   *traj_busy;      // no pending trajectory
+
     double       coeff[6];      // of current segment
 };
 
@@ -135,6 +137,7 @@ static int update(void *arg, const hal_funct_args_t *fa)
 	                // or try out to drop this point later on
 	                for (i = 0; i < ip->count; i++) {
 	                    struct joint *jp = &ip->joints[i];
+						*(jp->traj_busy) = true;
 	                    *(jp->curr_pos) = *(jp->end_pos) = rx.positions[i];
 	                    *(jp->curr_vel) = *(jp->end_vel) = rx.velocities[i];
 	                    *(jp->curr_acc) = *(jp->end_acc) = rx.accelerations[i];
@@ -154,6 +157,7 @@ static int update(void *arg, const hal_funct_args_t *fa)
 	                *(ip->progress) = 0.0;
 	                for (i = 0; i < rx.positions_count; i++) {
 			            struct joint *jp = &ip->joints[i];
+						*(jp->traj_busy) = true;
 			            double pos2 = *(jp->end_pos) = rx.positions[i];
 			    		double vel2 = *(jp->end_vel) = rx.velocities[i];
 			    		double acc2 = *(jp->end_acc) = rx.accelerations[i];
@@ -197,6 +201,7 @@ static int update(void *arg, const hal_funct_args_t *fa)
 	        // segment completed and no new point in ringbuffer
 	        for (i = 0; i < ip->count; i++) {
 	            struct joint *jp = &ip->joints[i];
+				*(jp->traj_busy) = false;
 	            jp->coeff[0] = *(jp->end_pos);
 	            jp->coeff[1] = 0.0;
 	            jp->coeff[2] = 0.0;
@@ -271,7 +276,8 @@ static int instantiate_interpolate(const char *name,
 		    hal_pin_float_newf(HAL_OUT, &(jp->end_acc), inst_id, "%s.%d.end-acc", name, i) ||
 		    hal_pin_float_newf(HAL_OUT, &(jp->curr_pos), inst_id, "%s.%d.curr-pos", name, i) ||
 		    hal_pin_float_newf(HAL_OUT, &(jp->curr_vel), inst_id, "%s.%d.curr-vel", name, i) ||
-		    hal_pin_float_newf(HAL_OUT, &(jp->curr_acc), inst_id, "%s.%d.curr-acc", name, i))
+		    hal_pin_float_newf(HAL_OUT, &(jp->curr_acc), inst_id, "%s.%d.curr-acc", name, i) ||
+			hal_pin_bit_newf(HAL_OUT, &(jp->traj_busy), inst_id, "%s.%d.traj-busy", name, i))
 		    return -1;
         // set all pin values to zero
         *(jp->end_pos) = 0;
@@ -280,6 +286,7 @@ static int instantiate_interpolate(const char *name,
         *(jp->curr_pos) = 0;
         *(jp->curr_vel) = 0;
         *(jp->curr_acc) = 0;
+		*(jp->traj_busy) = false;
     }
     hal_export_xfunct_args_t xfunct_args = {
         .type = FS_XTHREADFUNC,
