@@ -1,0 +1,7 @@
+# !/bin/bash
+
+    ls -A1 man1/ > man1.txt
+    
+    ls -A1 man3/ > man3.txt    
+    
+    ls -A1 man9/ > man9.txt    

@@ -1,0 +1,16 @@
+Install doclifter
+
+build the repo for RIP as normal
+
+cd /man
+
+`make-txt`  will generate a list file for each of the man dirs - man1.txt, man3.txt and man9.txt
+
+`lift-manpages` will pass each item in the list to doclifter, create the .xml file and then
+move the .xml files to xml-docs/man?
+
+The output will highlight the existing problems with the groff / troff formatting that it cannot 
+resolve.
+
+Since these are mostly with generated comp / icomps, that needs resolving within the sources
+before we go anywhere.
