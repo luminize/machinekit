@@ -1,4 +1,4 @@
-component ringread;
+component ringread "demonstrate ring read operations";
 
 pin out u32 underrun   "number of failed read attempts";
 pin out u32 received   "number of successful read attempts";
