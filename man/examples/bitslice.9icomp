@@ -1,0 +1,77 @@
+.TH BITSLICE "9" "2016-03-04" "Machinekit Documentation" "HAL Component"
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+
+.SH INSTANTIABLE COMPONENTS
+.HP
+.HP
+.B All instantiable components can be loaded in two manners
+
+.LP
+.B Using loadrt with or without count= | names= parameters as per legacy components
+
+.LP
+.B Using newinst, which names the instance and allows further parameters and arguments,
+
+.LP
+.B primarily pincount= which can set the number of pins created for that instance (where applicable)
+
+.HP
+.RE
+.SH NAME
+.HP
+.HP
+\fBbitslice\fR
+.SH SYNOPSIS
+.HP
+.HP
+\fBbitslice\fR
+.SH USAGE SYNOPSIS
+.HP
+.HP
+.B loadrt bitslice 
+.LP
+.B newinst bitslice <newinstname> [ pincount=\fIN\fB | iprefix=\fIprefix\fB ]
+.B                             [instanceparamX=\fIX\fB | argX=\fIX\fB ]
+.HP
+
+.SH FUNCTIONS
+.HP
+.HP
+.TP
+\fBbitslice.N.funct\fR 
+( OR
+\fB<newinstname>.funct\fR  )
+.HP
+
+.SH PINS
+.HP
+.HP
+.TP
+.B bitslice.N.in \fR u32 in \fR
+( OR
+.B <newinstname>.in \fR u32 in \fR )
+
+.HP
+The input value
+.TP
+.B bitslice.N.out-## \fR bit out  (MM=00..pincount) \fR
+( OR
+.B <newinstname>.out-## \fR bit out  (MM=00..pincount) \fR )
+
+.SH INST_PARAMETERS
+.HP
+.HP
+.TP
+.B pincount\fR int \fR(default: \fI16\fR)
+.SH AUTHOR
+.HP
+.HP
+Andy Pugh
+.SH LICENSE
+.HP
+.HP
+GPL2+
