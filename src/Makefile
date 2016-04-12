@@ -176,6 +176,7 @@ INSTALL_DIRS :=
 # Submakefiles from each of these directories will be included if they exist
 SUBDIRS := \
 	\
+	../man \
 	machinetalk \
 	machinetalk/support \
 	machinetalk/messagebus \
@@ -277,6 +278,7 @@ TODEPS = $(patsubst %.cc,depends/%$(2).d,$(patsubst %.c,depends/%$(2).d,$(1)))
 TOOBJSDEPS = $(call TOOBJS,$(1),$(2)) $(call TODEPS, $(1),$(2))
 
 SUBMAKEFILES := $(patsubst %,%/Submakefile,$(SUBDIRS))
+#$(info SUBMAKEFILES=$(SUBMAKEFILES))
 -include $(wildcard $(SUBMAKEFILES))
 
 # This checks that all the things listed in USERSRCS are either C files
