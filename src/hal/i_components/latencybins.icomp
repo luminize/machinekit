@@ -1,6 +1,6 @@
-component latencybins
-"""comp utility for scripts/latencyhistogram
-
+component latencybins "comp utility for scripts/latencyhistogram";
+description
+"""
 Usage:
   Read availablebins pin for the number of bins available.
   Set the maxbinnumber pin for the number of +/- bins.
@@ -25,7 +25,6 @@ Usage:
    The latency pin outputs the instantaneous latency.
 
 Maintainers note: hardcoded for MAXBINNUMBER==1000
-
 """;
 
 pin in  s32 maxbinnumber = 1000;  // MAXBINNUMBER

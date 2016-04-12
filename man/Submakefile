@@ -1,0 +1,96 @@
+# all Submakefiles must be written relative to the src directory
+
+DOCLIFTER_OPTS:=
+
+# (1): translating the static manpages
+# goal: a list of static man page sources to be converted
+# so do not pick up the generated ones (man9/*comp)
+# also, delete the skeleton.{3hal, 3rtapi, 9comp} files which
+# should not go into final docs
+
+# this works by creating the initial list (wildcard), then
+# deleting the undesireable ones (filter-out):
+
+ALL_MAN_SRCS=$(wildcard \
+		../man/man1/*.1 \
+		../man/man3/*.3* \
+		../man/man9/*.9*)
+
+# uncomment to see result
+#$(info ALL_MAN_SRCS: $(ALL_MAN_SRCS))
+
+GENERATED_MAN_SRCS=$(wildcard ../man/man9/*.9comp  ../man/man9/*.9icomp)
+#$(info GENERATED_MAN_SRCS: $(GENERATED_MAN_SRCS))
+
+
+# the list of files referring to another manpage by '.so 
+MANPAGE_ALIAS_FILES := $(shell grep  -rle '\.so ' ../man/man?)
+#$(info MANPAGE_ALIAS_FILES: $(MANPAGE_ALIAS_FILES))
+
+
+# we do not want to format the skeleton files:
+SKELETONS=$(wildcard \
+		../man/man1/skeleton.* \
+		../man/man3/skeleton.* \
+		../man/man9/skeleton.*)
+
+# this is the list of files for one-off conversion:
+# basic set ops.. take ALL_MAN_SRCS and substract the undesirable ones
+STATIC_MAN_SRCS := \
+	$(filter-out \
+		$(MANPAGE_ALIAS_FILES) $(SKELETONS) $(GENERATED_MAN_SRCS), \
+		$(ALL_MAN_SRCS))
+
+# to see what STATIC_MAN_SRCS has expanded into, uncomment this line and run make in the src dir:
+#$(info static manpage sources: $(STATIC_MAN_SRCS))
+
+
+# for the make rule to work, we need to translate this list
+# into a list of target files to generate
+# so for example transform ../man/man1/axis.1 -> ../man/xml-docs/man1/axis.1.xml etc
+# the first patsubst does the path change, the second appends the .xml suffix
+STATIC_XML_TARGETS = \
+	$(patsubst \
+		../man/%, \
+		../man/xml-docs/%,\
+		$(patsubst %, %.xml, $(STATIC_MAN_SRCS)))
+#$(info static manpage XML targets: $(STATIC_XML_TARGETS))
+
+# same for the generated *comp inputs:
+GENERATED_XML_TARGETS = \
+	$(patsubst \
+		../man/%, \
+		../man/xml-docs/%,\
+		$(patsubst %, %.xml, $(GENERATED_MAN_SRCS)))
+#$(info generated manpage XML targets: $(GENERATED_XML_TARGETS))
+
+
+
+# rule to transform man source into XML:
+../man/xml-docs/%.xml: ../man/%
+	@mkdir -p $(dir $@)
+	doclifter $(DOCLIFTER_OPTS) < $<    >$@
+
+
+
+# define the targets
+convert-static-manpages-to-xml: $(STATIC_XML_TARGETS)
+
+# this still fails due to syntax issues
+convert-generated-manpages-to-xml: $(GENERATED_XML_TARGETS)
+
+# dont know what to do with the 'see also' files, for now just generate a list
+# might be used later
+../man/referrals.txt:  $(MANPAGE_ALIAS_FILES)
+	python ../man/generate-referrals.py $(MANPAGE_ALIAS_FILES) >../man/referrals.txt
+
+
+
+# try it out:
+whole-sausage: ../man/referrals.txt \
+	convert-static-manpages-to-xml \
+	convert-generated-manpages-to-xml
+
+# to start from fresh:
+clear-sausage:
+	rm -rf ../man/xml-docs ../man/referrals.txt
