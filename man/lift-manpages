@@ -12,11 +12,12 @@
     while read LINE ; do
 	doclifter man3/$LINE ;
     done
-
+    mv -f man3/*.xml xml-docs/man3/
+    
     exec < ./man9.txt
 		
     while read LINE ; do
 	doclifter man9/$LINE ;
     done
-
+    mv -f man9/*.xml xml-docs/man9/
 ## generate the man?.txt with make-txt
