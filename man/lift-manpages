@@ -4,20 +4,19 @@
 		
     while read LINE ; do
 	doclifter man1/$LINE ;
-#	manname=$(basename -s .icomp "$LINE") ;
     done
     mv -f man1/*.xml xml-docs/man1/
 
-#    exec < ./man3.txt
-#		
-#    while read LINE ; do
-#	doclifter man3/$LINE ;
-#    done
-#
-#    exec < ./man9.txt
-#		
-#    while read LINE ; do
-#	doclifter man9/$LINE ;
-#    done
-#
+    exec < ./man3.txt
+		
+    while read LINE ; do
+	doclifter man3/$LINE ;
+    done
+
+    exec < ./man9.txt
+		
+    while read LINE ; do
+	doclifter man9/$LINE ;
+    done
+
 ## generate the man?.txt with make-txt
