@@ -1,16 +1,14 @@
-Install doclifter
+Current state of play
 
-build the repo for RIP as normal
+instcomp is modified to produce .asciidoc files in man/doc/man9
 
-cd /man
+Most .icomps have been edited to remove groff formatting and
 
-`make-txt`  will generate a list file for each of the man dirs - man1.txt, man3.txt and man9.txt
+to improve their appearence in asciidoc
 
-`lift-manpages` will pass each item in the list to doclifter, create the .xml file and then
-move the .xml files to xml-docs/man?
+Some components remain to be done
 
-The output will highlight the existing problems with the groff / troff formatting that it cannot 
-resolve.
+bldc_hall3 for example has huge wadges of formatting in tables which need converting
 
-Since these are mostly with generated comp / icomps, that needs resolving within the sources
-before we go anywhere.
+1600 13.04.2016
+
