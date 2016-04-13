@@ -16,23 +16,23 @@ pass the Z position and feed back untouched.
 
 If not enabled pass the Z position and feed back untouched.
 
-Physical Connections typical
+*Physical Connections typical*
 paraport.0.pin-12-in <= THC controller Plasma Up
 paraport.0.pin-13-in <= THC controller Plasma Down
 parport.0.pin-15-in  <= Plasma Torch Arc Ok Signal
 parport.0.pin-16-out => Plasma Torch Start Arc Contacts
 
-HAL Plasma Connections
+*HAL Plasma Connections*
 thc.torch-up <= paraport.0.pin-12-in
 thc.torch-down <= paraport.0.pin-13-in
 motion.spindle-on => parport.0.pin-16-out (start the arc)
 thc.arc-ok <= motion.digital-in-00 <= parport.0.pin-15-in (arc ok signal)
 
-HAL Motion Connections
+*HAL Motion Connections*
 thc.requested-vel <= motion.requested-vel
 thc.current-vel <= motion.current-vel
 
-Pyvcp Connections
+*Pyvcp Connections*
 In the xml file you need something like:
 
 <checkbutton>

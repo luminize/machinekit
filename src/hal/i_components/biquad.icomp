@@ -35,8 +35,11 @@
 
 component biquad "Biquad IIR filter";
 
-description """Biquad IIR filter. Implements the following transfer function:
-H(z) = (n0 + n1z-1 + n2z-2) / (1+ d1z-1 + d2z-2)""";
+description """
+Biquad IIR filter. Implements the following transfer function:
+H(z) = (n0 + n1z-1 + n2z-2) / (1+ d1z-1 + d2z-2)
+
+""";
 
 pin in float in "Filter input.";
 pin out float out "Filter output.";

@@ -14,7 +14,7 @@
  *
  ********************************************************************/
 component at_pid "HAL component that provides Proportional \
-    Integeral/Derivative control loops.  It is a realtime component.";
+    Integeral/Derivative control loops.";
 
 description """ \
   This file, 'at_pid.icomp', is a HAL component that provides Proportional/

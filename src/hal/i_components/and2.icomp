@@ -2,15 +2,15 @@ component and2 "Two-input AND gate";
 pin in bit in0;
 pin in bit in1;
 pin out bit out """\
-\\fBout\\fR is computed from the value of \\fBin0\\fR and \\fBin1\\fR according to the following rule:
-.RS
-.TP
-\\fBin0=TRUE in1=TRUE\\fB
-\\fBout=TRUE\\fR
-.TP
-Otherwise,
-\\fBout=FALSE\\fR
-.RE"""
+
+* *out* is computed from the value of *in0* and *in1* according to the following rule:
+** *in0=TRUE in1=TRUE*
+** *out=TRUE*
+* Otherwise,
+** *out=FALSE*
+
+"""
+
 ;
 function _ nofp;
 license "GPL";
