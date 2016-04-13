@@ -10,7 +10,7 @@ include $(patsubst %.icomp, $(BASEPWD)/halcomp-srcs/%.mak, $(ICOMPS))
 else
 ICOMPS := $(sort $(wildcard $(HALICOMPDIR)/*.icomp))
 
-ICOMP_MANPAGES := $(patsubst $(HALICOMPDIR)/%.icomp, ../man/man9/%.9icomp, \
+ICOMP_MANPAGES := $(patsubst $(HALICOMPDIR)/%.icomp, ../man/doc/man9/%.asciidoc, \
 	$(ICOMPS))
 
 
@@ -30,10 +30,10 @@ obj-m += \
 	$(patsubst hal/i_components/%.icomp, %.o, $(ICOMPS))
 endif
 
-ICOMP_MANPAGES := $(patsubst $(HALICOMPDIR)/%.icomp, ../man/man9/%.9icomp, \
+ICOMP_MANPAGES := $(patsubst $(HALICOMPDIR)/%.icomp, ../man/doc/man9/%.asciidoc, \
 	$(ICOMPS))
 
-$(ICOMP_MANPAGES): ../man/man9/%.9icomp: $(HALICOMPDIR)/%.icomp ../bin/instcomp
+$(ICOMP_MANPAGES): ../man/doc/man9/%.asciidoc: $(HALICOMPDIR)/%.icomp ../bin/instcomp
 	$(ECHO) Making icomp manpage $(notdir $@)
 	@mkdir -p $(dir $@)
 	$(Q)../bin/instcomp --document -o $@ $<
