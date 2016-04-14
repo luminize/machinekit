@@ -77,13 +77,10 @@ modules: $(patsubst %.icomp, halcomp-srcs/%.mak, \
 	$(ICOMPS))
 endif # BUILD_ALL_FLAVORS == yes
 
-CLEAN_TARGETS += clean-icomp-manpages
-CLEAN_TARGETS += clean-icomp-docpages
+#.PHONEY: clean
 
-clean = $CLEAN_TARGETS
-clean-icomp-manpages:
-	-rm -f $(ICOMP_MANPAGES)
-clean-icomp-docpages:
-	-rm -f $(ICOMP_DOCPAGES)
+#clean:
+#	-rm -f ../man/man9/*.9icomp
+#	-rm -f ../man/doc/man9/*.asciidoc
 
 

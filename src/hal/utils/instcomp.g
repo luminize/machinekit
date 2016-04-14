@@ -980,6 +980,7 @@ def document(filename, outfilename):
     f = open(outfilename, "w")
 
     print >>f, ".TH %s \"9\" \"%s\" \"Machinekit Documentation\" \"HAL Component\"" % (comp_name.upper(), time.strftime("%F"))
+#    print >>f, ".TH %s \"9\" \"Machinekit Documentation\" \"HAL Component\"" % (comp_name.upper())
     print >>f, ".de TQ\n.br\n.ns\n.TP \\\\$1\n..\n"
 
     print >>f, ".SH INSTANTIABLE COMPONENTS"
@@ -1178,9 +1179,10 @@ def document(filename, outfilename):
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
+        print >>f, ""
 
-
-
+    print >>f, "( Generated from source file: %s )" % filename
+    
 ##############################################################################
 # asciidoc
 ############
@@ -1192,10 +1194,10 @@ def adocument(filename, outfilename):
     a, b = parse(filename)
     f = open(outfilename, "w")
 
-    print >>f, "= Machinekit Documentation -- [small]#generated %s#"  % (time.strftime("%F"))
+    print >>f, "= Machinekit Documentation"
 
     print >>f, ""
-    print >>f, "[big]#HAL Component %s#" % (comp_name.upper())
+    print >>f, "[big]#HAL Component -- %s#" % (comp_name.upper())
     print >>f, ""
     print >>f, "=== INSTANTIABLE COMPONENTS -- General"
     print >>f, ""
@@ -1371,6 +1373,8 @@ def adocument(filename, outfilename):
         print >>f, "%s" % doc[1]
         print >>f, ""    
         
+    print >>f, "( Generated from source file: %s on %s )" % (filename, time.strftime("%F"))
+        
 ###########################################################
 
 
@@ -1463,7 +1467,7 @@ def usage(exitval=0):
 
 Usage:
            %(name)s [--compile|--preprocess|--document|--ascii-document|--view-doc] compfile...
-    [sudo] %(name)s [--install|--install-doc] compfile...
+    [sudo] %(name)s [--install|--install-doc|--install-man] compfile...
            %(name)s --print-modinc
 """ % {'name': os.path.basename(sys.argv[0])}
     raise SystemExit, exitval
@@ -1482,7 +1486,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "luijcpdo:h?",
                            ['install', 'compile', 'preprocess', 'outfile=',
                             'document', 'ascii-document', 'help', 'userspace', 'install-doc',
-                            'view-doc', 'require-license', 'print-modinc'])
+                            'install-man', 'view-doc', 'require-license', 'print-modinc'])
     except getopt.GetoptError:
         usage(1)
     
@@ -1501,8 +1505,12 @@ def main():
 	if k in ("-a", "--ascii-document"):            
 	    mode = DOCUMENT
 	    doctype = "asciidoc"
-        if k in ("-j", "--install-doc"):
+        if k in ("-m", "--install-man"):
             mode = INSTALLDOC
+            doctype = "manpage"
+        if k in ("-c", "--install-doc"):
+            mode = INSTALLDOC
+            doctype = "asciidoc"
         if k in ("-j", "--view-doc"):
             mode = VIEWDOC
             doctype = "manpage"

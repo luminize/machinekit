@@ -7,7 +7,7 @@ ifeq ("$(origin VV)", "command line")
 endif
 # Delete the default suffix rules
 .SUFFIXES:
-.PHONY: default userspace modules clean modclean depclean install python pythonclean cscope cscopeclean
+.PHONY: default userspace modules clean modclean depclean docclean install python pythonclean cscope cscopeclean
 
 # A "trivial build" is one which should not include dependency information
 # either because it should be usable before dependency information can be
@@ -702,8 +702,12 @@ modclean:
 
 depclean:
 	-rm -rf depends
-
-clean: depclean modclean
+	
+docclean:
+	-rm -f ../man/man9/*.9icomp
+	-rm -f ../man/doc/man9/*.asciidoc
+	
+clean: depclean modclean docclean
 	find . -name '*.o' |xargs rm -f
 	-rm -rf objects
 	-rm -f $(TARGETS)
