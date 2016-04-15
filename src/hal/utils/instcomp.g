@@ -58,6 +58,8 @@ parser Hal:
       | "see_also" String ";"   {{ see_also(String) }}
       | "notes" String ";"   {{ notes(String) }}
       | "description" String ";"   {{ description(String) }}
+      | "special_format_man" String ";"   {{ special_format_man(String) }}      
+      | "special_format_doc" String ";"   {{ special_format_doc(String) }}            
       | "license" String ";"   {{ license(String) }}
       | "author" String ";"   {{ author(String) }}
       | "include" Header ";"   {{ include(Header) }}
@@ -172,6 +174,12 @@ def comp(name, doc):
 def description(doc):
     docs.append(('descr', doc));
 
+def special_format_man(doc):
+    docs.append(('sf_man', doc));
+
+def special_format_doc(doc):
+    docs.append(('sf_doc', doc));
+
 def license(doc):
     docs.append(('license', doc));
 
@@ -280,8 +288,6 @@ def to_noquotes(name):
 
 ##################### Start ########################################
 
-global doctype
-doctype = None
 
 def prologue(f):
 
@@ -334,6 +340,9 @@ static int comp_id;
     global have_count
     have_count = False
 
+    global doctype
+    doctype = None
+    
     print >>f, "static char *compname = \"%s\";\n" % (comp_name)
 
     for name in includes:
@@ -1062,6 +1071,13 @@ def document(filename, outfilename):
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
 
+    doc = finddoc('sf_man')
+    if doc and doc[1]:
+        print >>f, ".SH EXTRA INFO"
+        print >>f, ".HP"
+        print >>f, ".HP"
+        print >>f, "%s" % doc[1]
+
     if functions:
         print >>f, ".SH FUNCTIONS"
         print >>f, ".HP"
@@ -1272,6 +1288,13 @@ def adocument(filename, outfilename):
         print >>f, ""
         print >>f, "%s" % doc[1]
         print >>f, ""            
+
+    doc = finddoc('sf_doc')
+    if doc and doc[1]:
+        print >>f, "=== EXTRA INFO"
+        print >>f, ""
+        print >>f, "%s" % doc[1]
+        print >>f, ""
 
     if functions:
         print >>f, "=== FUNCTIONS"
@@ -1566,7 +1589,7 @@ def main():
 	                manpath = os.path.join(BASE, "man/doc/man9")
     	            outfile = os.path.join(manpath, basename + ".asciidoc")
         	    print "INSTALLDOC", outfile
-            	    document(f, outfile)
+            	    adocument(f, outfile)
             	
             elif f.endswith(".icomp"):
                 process(f, mode, outfile)
