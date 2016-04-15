@@ -1505,13 +1505,13 @@ def main():
 	if k in ("-a", "--ascii-document"):            
 	    mode = DOCUMENT
 	    doctype = "asciidoc"
-        if k in ("-m", "--install-man"):
+        if k in ("-j", "--install-man"):
             mode = INSTALLDOC
             doctype = "manpage"
-        if k in ("-c", "--install-doc"):
+        if k in ("-k", "--install-doc"):
             mode = INSTALLDOC
             doctype = "asciidoc"
-        if k in ("-j", "--view-doc"):
+        if k in ("-v", "--view-doc"):
             mode = VIEWDOC
             doctype = "manpage"
         if k in ("--print-modinc",):
