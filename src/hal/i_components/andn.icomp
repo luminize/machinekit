@@ -1,8 +1,7 @@
 component andn "N input AND gate";
-description """\
+description """
 *out* is computed from the result of logic AND applied
 to all input pins. 
-
 """;
 
 // Input Pins

@@ -1,8 +1,7 @@
 component and2 "Two-input AND gate";
 pin in bit in0;
 pin in bit in1;
-pin out bit out """\
-
+pin out bit out """
 out is computed from the value of *in0* and *in1* according to the following rule:
 
     in0=TRUE in1=TRUE
@@ -11,11 +10,8 @@ out is computed from the value of *in0* and *in1* according to the following rul
 
 Otherwise,
 
-    out=FALSE
-
-"""
-
-;
+    out=FALSE      
+""";
 function _ nofp;
 license "GPL";
 ;;

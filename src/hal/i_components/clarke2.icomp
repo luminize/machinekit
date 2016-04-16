@@ -1,5 +1,6 @@
 component clarke2 "Two input version of Clarke transform";
-description """
+description 
+"""
 The Clarke transform can be used to translate a vector
 quantity from a three phase system (three components 120 degrees
 apart) to a two phase Cartesian system.\n\n*clarke2* implements
@@ -11,7 +12,8 @@ two of the three are needed to completely define the current or voltage.
 B of the input.  Since the H (homopolar) output will always be zero in
 this case, it is not generated.""";
 
-see_also """
+see_also 
+"""
 *clarke3* for the general case, *clarkeinv* for the inverse transform.
 """;
 pin in float a;
