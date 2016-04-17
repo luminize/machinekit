@@ -1,5 +1,6 @@
 component ilowpass "Low-pass filter with integer inputs and outputs";
-description """
+description 
+"""
 While it may find other applications, this component was written
 to create smoother motion while jogging with an MPG.
 
@@ -11,7 +12,7 @@ this can be smoothed.
 Choose *scale* conservatively so that during a single session
 there will never be more than about 2e9/*scale* pulses seen
 on the MPG.  Choose *gain* according to the smoothing level
-desired.  Divide the *axis.\\fIN*.jog-scale* values by
+desired.  Divide the *axis.N.jog-scale* values by
 *scale*.
 """;
 

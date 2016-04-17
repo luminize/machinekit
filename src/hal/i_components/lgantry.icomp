@@ -61,10 +61,11 @@ variable hal_s32_t   prev_home[pincount] = 0;
 variable hal_s32_t   curr_home[pincount] = 0;
 variable hal_float_t pos_fb_target[pincount] = 0.0;
 
-description """
+description
+"""
 Drives multiple physical motors (joints) from a single axis input
 
-The `pincount' value is the number of joints to control.  Two is typical, but
+The 'pincount' value is the number of joints to control.  Two is typical, but
 up to seven is supported (a three joint setup has been tested with hardware).
 
 All controlled joints track the commanded position (with a per-joint offset)
