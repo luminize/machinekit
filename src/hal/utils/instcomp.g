@@ -1213,7 +1213,7 @@ def adocument(filename, outfilename):
     print >>f, "= Machinekit Documentation"
 
     print >>f, ""
-    print >>f, "[big]#HAL Component -- %s#" % (comp_name.upper())
+    print >>f, "== HAL Component -- %s" % (comp_name.upper())
     print >>f, ""
     print >>f, "=== INSTANTIABLE COMPONENTS -- General"
     print >>f, ""
@@ -1234,10 +1234,10 @@ def adocument(filename, outfilename):
         else:
             firstline = doc[2]
             rest = ''
-        print >>f, "[big]#%s -- %s#" % (doc[1], firstline)
+        print >>f, "==== %s -- %s" % (doc[1], firstline)
     else:
         rest = ''
-        print >>f, "[big]#%s#" % doc[1]
+        print >>f, "==== %s" % doc[1]
     print >>f, ""
     
     print >>f, "=== SYNOPSIS"
