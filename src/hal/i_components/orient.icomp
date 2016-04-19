@@ -15,7 +15,8 @@ function _ "Update *command* based on *enable*, *position*, *mode* and *angle*."
 author "Michael Haberler";
 
 
-description """
+description 
+"""
 This component is designed to support a spindle orientation PID loop by providing a
 command value, and fit with the motion spindle-orient support pins to support the M19 code.
 
