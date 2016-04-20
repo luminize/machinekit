@@ -20,9 +20,12 @@ i_manpages: $(ICOMP_MANPAGES)
 i_docpages: $(ICOMP_DOCPAGES)
 
 TARGETS += i_manpages
-TARGETS += i_docpages
 .PHONY: i_manpages
+
+ifeq ($(BUILD_DOCS),yes)
+TARGETS += i_docpages
 .PHONY: i_docpages
+endif
 
 ifeq ($(TRIVIAL_BUILD)+$(BUILD_THREAD_MODULES),no+yes)
 -include $(patsubst %.icomp, $(BASEPWD)/halcomp-srcs/%.mak,\

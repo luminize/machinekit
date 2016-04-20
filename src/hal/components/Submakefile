@@ -37,7 +37,16 @@ DRIVER_COMP_MANPAGES := $(patsubst hal/drivers/%.comp, ../man/man9/%.9comp, \
 DRIVER_COMP_DOCPAGES := $(patsubst hal/drivers/%.comp, ../man/doc/man9/%.asciidoc, \
 	$(COMP_DRIVERS))
 
+
+
+
+ifeq ($(BUILD_DOCS),yes)                                       
 manpages: $(COMP_MANPAGES) $(COMP_DOCPAGES) $(DRIVER_COMP_MANPAGES) $(DRIVER_COMP_DOCPAGES) $(MSG_COMP_MANPAGES) $(MSG_COMP_DOCPAGES)
+else
+manpages: $(COMP_MANPAGES) $(DRIVER_COMP_MANPAGES) $(MSG_COMP_MANPAGES)
+endif        
+
+
 TARGETS += manpages
 .PHONY: manpages
 ifeq ($(TRIVIAL_BUILD)+$(BUILD_THREAD_MODULES),no+yes)
