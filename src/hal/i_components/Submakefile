@@ -78,7 +78,7 @@ modules: $(patsubst %.icomp, halcomp-srcs/%.mak, \
 endif # BUILD_ALL_FLAVORS == yes
 
 #.PHONEY: clean
-
+# now done directly in main Makefile
 #clean:
 #	-rm -f ../man/man9/*.9icomp
 #	-rm -f ../man/doc/man9/*.asciidoc

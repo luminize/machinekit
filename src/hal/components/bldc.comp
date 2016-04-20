@@ -328,7 +328,7 @@ three-phase motor feedback devices and the corresponding types of drive. However
 there is no requirement that the motor and drive should necessarily be of
 inherently compatible types.
 
-(ignore the auto-generated SYNOPSIS above)
+(ignore the auto-generated USAGE_SYNOPSIS above)
 
 *loadrt bldc cfg=qi6,aH*
 

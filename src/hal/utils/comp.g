@@ -889,19 +889,22 @@ def document(filename, outfilename):
             else:
                 lead = ".TQ"
 
+    print >>f, ".HP"
     doc = finddoc('see_also')
     if doc and doc[1]:
         print >>f, ".SH SEE ALSO"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
-
+        print >>f, ".HP"
+        
     doc = finddoc('notes')
     if doc and doc[1]:
         print >>f, ".SH NOTES"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
+        print >>f, ".HP"        
 
     doc = finddoc('author')
     if doc and doc[1]:
@@ -909,13 +912,15 @@ def document(filename, outfilename):
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
-
+        print >>f, ".HP"
+        
     doc = finddoc('license')
     if doc and doc[1]:
-        print >>f, ".SH LICENSE"
+        print >>f, ".SH LICENCE"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
+        print >>f, ".HP"        
         
 	print >>f, "( Generated from source file: %s )" % filename
         
@@ -975,7 +980,7 @@ def adocument(filename, outfilename):
         print >>f, ""                    
     else:
 	if options.get("userspace"):
-    	    print >>f, "%s" % comp_name
+    	    print >>f, "%s [-W]" % comp_name
             print >>f, ""
 	else:
     	    if rest:
@@ -984,14 +989,15 @@ def adocument(filename, outfilename):
 	    else:
     	        if options.get("singleton") or options.get("count_function"):
         	    if has_personality:
-            	        print >>f, "*loadrt %s personality=_P_*" % comp_name,
+            	        print >>f, "*loadrt %s personality=_P_*" % comp_name
                     else:
-	                print >>f, ".*loadrt %s*" % comp_name,
+	                print >>f, "*loadrt %s*" % comp_name
     	        else:
         	    if has_personality:
-            	        print >>f, "*loadrt %s [count=_N_|names=_name1_[,_name2..._]] [personality=_P,P,..._]*" % comp_name,
+            	        print >>f, "*loadrt %s [count=_N_|names=_name1_[,_name2..._]] [personality=_P,P,..._]*" % comp_name
                     else:
-	                print >>f, "*loadrt %s [count=_N_|names=_name1_[,_name2..._]]*" % comp_name,
+	                print >>f, "*loadrt %s [count=_N_|names=_name1_[,_name2..._]]*" % comp_name
+    	        
     	        for type, name, default, doc in modparams:
         	    print >>f, "[%s=_N_]" % name,
         	print >>f
@@ -1003,9 +1009,9 @@ def adocument(filename, outfilename):
         	if hasparamdoc:
             	    for type, name, default, doc in modparams:
                 	print >>f, ""
-                        print >>f, "*%s" % name,
+                        print >>f, "*%s*" % name,
 	                if default:
-    	                    print >>f, "[default: %s]" % default
+    	                    print >>f, "*[default: %s]*" % default
         	        else:
             	            print >>f
                 	print >>f, doc
@@ -1033,7 +1039,10 @@ def adocument(filename, outfilename):
         print >>f, "=== FUNCTIONS"
         print >>f, ""
         for _, name, fp, doc in finddocs('funct'):
-            print >>f, "*%s*" % name,
+    	    if name != None and name != "_":
+                print >>f, "*%s.N.%s*" % (comp_name, name) 
+            else :
+                print >>f, "*%s.N*" % comp_name 
             if fp:
                 print >>f, "(requires a floating-point thread)"
             else:
@@ -1058,10 +1067,12 @@ def adocument(filename, outfilename):
         if value:
             print >>f, "*(default: _%s_)*" % value
         if doc:
-            print >>f, doc
-	print >>f, ""
+            print >>f, " - %s\n" % doc        
+        else:
+	    print >>f, "\n"
 
-    lead = ".TP"
+    print >>f, "\n"
+
     if params:
         print >>f, "=== PARAMETERS"
         print >>f, ""
@@ -1079,11 +1090,15 @@ def adocument(filename, outfilename):
             if value:
                 print >>f, "*(default: _%s_)*" % value
             if doc:
-                print >>f, doc
-	print >>f, ""
+                print >>f, " - %s\n" % doc
+            else:
+        	print >>f, "\n"
+        	
+	print >>f, "\n"
 	
     doc = finddoc('see_also')
     if doc and doc[1]:
+        print >>f, ""        
         print >>f, "=== SEE ALSO"
         print >>f, ""
         print >>f, "%s" % doc[1]
@@ -1091,6 +1106,7 @@ def adocument(filename, outfilename):
     
     doc = finddoc('notes')
     if doc and doc[1]:
+        print >>f, ""    
         print >>f, "=== NOTES"
         print >>f, ""
         print >>f, "%s" % doc[1]
@@ -1098,6 +1114,7 @@ def adocument(filename, outfilename):
 
     doc = finddoc('author')
     if doc and doc[1]:
+        print >>f, ""    
         print >>f, "=== AUTHOR"
         print >>f, ""
         print >>f, "%s" % doc[1]
@@ -1105,7 +1122,8 @@ def adocument(filename, outfilename):
         
     doc = finddoc('license')
     if doc and doc[1]:
-        print >>f, "=== LICENSE"
+        print >>f, ""    
+        print >>f, "=== LICENCE"
         print >>f, ""
         print >>f, "%s" % doc[1]
         print >>f, ""    
