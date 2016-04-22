@@ -2,6 +2,9 @@ import os, sys, re
 
 SourceFilePath = sys.argv[1]
 TargetFilePath = sys.argv[2]
+SplitExtension = SourceFilePath.split('.')
+print len(SplitExtension)
+Extension = SplitExtension[len(SplitExtension)-1]
 
 print "source  = " + SourceFilePath
 print "target  = " + TargetFilePath
@@ -122,8 +125,12 @@ while (i < len(SourceLines)):
         # the title must be split from the line, added, and underlined with the
         # same amount of '=' signs underneath
         CompTitle=SourceLines[i].split(' ')[1]
-        ComponentTitle.append(CompTitle+'\n')
-        ComponentTitle.append("="*len(CompTitle)+'\n\n')
+        ComponentTitle.append('= '+CompTitle+'(%s)\n' % Extension)
+        AsciidocLines.append(":manmanual: HAL Components\n")
+        AsciidocLines.append(":mansource: %s\n" % TargetFilePath)
+        AsciidocLines.append(":man version : \n")
+
+#        ComponentTitle.append("="*len(CompTitle)+'\n\n')
         #ComponentTitle.append('\n')
     #
     result_re_SH = re_SH.search(SourceLines[i])
@@ -135,12 +142,16 @@ while (i < len(SourceLines)):
         CompHeader = CompHeader.strip('\"')
         CompHeaderDashed = CompHeader.replace(" ", "-")
         #result_re_between_quotes = re_between_quotes.search(CompHeader)
-        AsciidocLines.append("\n\n" + "===== " + \
-                             "[[" + CompHeaderDashed.lower() + "]]" \
-                             + CompHeader + "\n")
-        IndexLines.append(". <<" + CompHeaderDashed.lower() + "," + \
-                          CompHeader + ">>" + "\n")
-    #
+        AsciidocLines.append("\n\n" + "== " + CompHeader + "\n")
+#        AsciidocLines.append(":manmanual: HAL Components\n")
+#        AsciidocLines.append(":mansource: %s\n" % TargetFilePath)
+#        AsciidocLines.append(":man version : \n")
+#        AsciidocLines.append("\n\n" + "===== " + \
+#                             "[[" + CompHeaderDashed.lower() + "]]" \
+#                             + CompHeader + "\n")
+#        IndexLines.append(". <<" + CompHeaderDashed.lower() + "," + \
+#                          CompHeader + ">>" + "\n")
+#    
     result_re_B = re_B.search(SourceLines[i])
     if (result_re_B != None):
         #read the line, remove the ".B " and add to the Asciidoclines
@@ -185,7 +196,7 @@ while (i < len(SourceLines)):
 AsciidocFile = open(TargetFilePath, 'w+')
 
 AsciidocFile.writelines(ComponentTitle)
-AsciidocFile.writelines(IndexLines)
+#AsciidocFile.writelines(IndexLines)
 AsciidocFile.writelines(AsciidocLines)
 
 AsciidocFile.close()

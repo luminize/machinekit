@@ -13,8 +13,11 @@ DOCLIFTER_OPTS:=
 
 ALL_MAN_SRCS=$(wildcard \
 		../man/man1/*.1 \
-		../man/man3/*.3* \
-		../man/man9/*.9*)
+		../man/man3/*.3 \
+		../man/man3/*.3hal \
+		../man/man3/*.3rtapi \
+		../man/man3/*.3hm2 \
+		../man/man9/*.9)
 
 # uncomment to see result
 #$(info ALL_MAN_SRCS: $(ALL_MAN_SRCS))
@@ -64,17 +67,27 @@ GENERATED_XML_TARGETS = \
 		$(patsubst %, %.xml, $(GENERATED_MAN_SRCS)))
 #$(info generated manpage XML targets: $(GENERATED_XML_TARGETS))
 
-
+STATIC_ASCIIDOC_TARGETS = \
+	$(patsubst \
+		../man/%, \
+		../man/%,\
+		$(patsubst %, %.asciidoc, $(STATIC_MAN_SRCS)))
+$(info static manpage ASCIIDOC targets: $(STATIC_ASCIIDOC_TARGETS))
 
 # rule to transform man source into XML:
 ../man/xml-docs/%.xml: ../man/%
 	@mkdir -p $(dir $@)
 	doclifter $(DOCLIFTER_OPTS) < $<    >$@
 
+../man/%.asciidoc: ../man/%
+	python ../scripts/troff-to-asciidoc.py $< $@
 
 
 # define the targets
 convert-static-manpages-to-xml: $(STATIC_XML_TARGETS)
+
+# define the targets
+convert-static-manpages-to-asciidoc: $(STATIC_ASCIIDOC_TARGETS)
 
 # this still fails due to syntax issues
 convert-generated-manpages-to-xml: $(GENERATED_XML_TARGETS)
@@ -84,7 +97,7 @@ convert-generated-manpages-to-xml: $(GENERATED_XML_TARGETS)
 ../man/referrals.txt:  $(MANPAGE_ALIAS_FILES)
 	python ../man/generate-referrals.py $(MANPAGE_ALIAS_FILES) >../man/referrals.txt
 
-
+cassarole: convert-static-manpages-to-asciidoc
 
 # try it out:
 whole-sausage: ../man/referrals.txt \
