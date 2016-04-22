@@ -3,39 +3,49 @@
 :mansource: ../man/man9/hostmot2.9.asciidoc
 :man version : 
 
-
-
 == NAME
-
-hostmot2 -- LinuxCNC HAL driver for the Mesa Electronics HostMot2 firmware.
+hostmot2 - LinuxCNC HAL driver for the Mesa Electronics HostMot2 firmware.
 
 
 == SYNOPSIS
 See the config modparam section below for Mesa card configuration. Typically
 hostmot2 is loaded with no parameters unless debugging is required.
-loadrt hostmot2 [debug_idrom=__N__**] [debug_module_descriptors=**__N__**] [debug_pin_descriptors=**__N__**] [debug_modules=**__N__**]
-**.RS
+
+**loadrt hostmot2 [debug_idrom=**__N__**] [debug_module_descriptors=**__N__**] [debug_pin_descriptors=**__N__**] [debug_modules=**__N__**]**
 
 **debug_idrom** [default: 0]
+
+[indent=4]
+====
 Developer/debug use only!  Enable debug logging of the HostMot2
 IDROM header.
+====
 
 **debug_module_descriptors** [default: 0]
+
+[indent=4]
+====
 Developer/debug use only!  Enable debug logging of the HostMot2
 Module Descriptors.
+====
 
 **debug_pin_descriptors** [default: 0]
+
+[indent=4]
+====
 Developer/debug use only!  Enable debug logging of the HostMot2
 Pin Descriptors.
+====
 
 **debug_modules** [default: 0]
+
+[indent=4]
+====
 Developer/debug use only!  Enable debug logging of the HostMot2
 Modules used.
-.RE
-
+====
 
 == DESCRIPTION
-
 hostmot2 is a device driver that interfaces the Mesa HostMot2 firmware
 to the LinuxCNC HAL.  This driver by itself does nothing, the boards
 that actually run the firmware require their own drivers before anything
@@ -48,9 +58,7 @@ step/dir generators, and general purpose I/O pins (GPIOs).  These things are
 called "Modules".  The firmware is configured, at firmware compile time,
 to provide zero or more instances of each of these Modules.
 
-
 == Board I/O Pins
-
 The HostMot2 firmware runs on an FPGA board.  The board interfaces with
 the computer via PCI, PC-104/Plus, or EPP, and interfaces with motion
 control hardware such as servos and stepper motors via I/O pins on
@@ -74,9 +82,7 @@ constrained by the requirements of the owning Module, and have a more
 limited interface in HAL.  This is described in the General Purpose
 I/O section below.
 
-
 == config modparam
-
 All the board-driver modules (hm2_pci and hm2_7i43) accept a load-time
 modparam of type string array, named "config".  This array has one config
 string for each board the driver should use.  Each board's config string
@@ -93,9 +99,10 @@ For example, if your control computer has one 5i20 and one 5i23 you
 might load the hm2_pci driver with a HAL command (in halcmd) something
 like this:
 
-.nf
-loadrt hm2_pci config="firmware=hm2/5i20/SVST8_4.BIT num_encoders=3 num_pwmgens=3 num_stepgens=3,firmware=hm2/5i23/SVSS8_8.BIT sserial_port_0=0000 num_encoders=4"
-.fi
+[example,indent=4]
+====
+**loadrt hm2_pci config="firmware=hm2/5i20/SVST8_4.BIT num_encoders=3 num_pwmgens=3 num_stepgens=3,firmware=hm2/5i23/SVSS8_8.BIT sserial_port_0=0000 num_encoders=4"**
+====
 
 Note: this assumes that the hm2_pci driver detects the 5i20 first and
 the 5i23 second.  If the detection order does not match the order
@@ -108,22 +115,21 @@ Best to try loading it and see what the detection order is.
 
 The valid entries in the format string are:
 
- [firmware=__F__**]
-** [num_encoders=__N__**]
-** [ssi_chan___N__**=**__abc%nq__**]
-** [biss_chan___N__**=**__abc%nq__**]
-** [fanuc_chan___N__**=**__abc%nq__**]
-** [num_resolvers=__N__**]
-** [num_pwmgens=__N__**]
-** [num_3pwmgens=__N__**]
-** [num_stepgens=__N__**]
-** [stepgen_width=__N__**]
-** [sserial_port___0__**=**__00000000__**]
-** [num_leds=__N__**]
-** [enable_raw]
-.RS
+* [**firmware=**__F__]
+* [**num_encoders=**__N__]
+* [**ssi_chan_**__N__**=**__abc%nq__]
+* [**biss_chan_**__N__**=**__abc%nq__]
+* [**fanuc_chan_**__N__**=**__abc%nq__]
+* [**num_resolvers=**__N__]
+* [**num_pwmgens=**__N__]
+* [**num_3pwmgens=**__N__]
+* [**num_stepgens=**__N__]
+* [**stepgen_width=**__N__]
+* [**sserial_port_**__0__**=**__00000000__]
+* [**num_leds=**__N__]
+* [**enable_raw**]
 
-**firmware** [optional]
+=== **firmware** [optional]
 Load the firmware specified by F into the FPGA on this board.  If no
 "**firmware=**__F__" string is specified, the FPGA will not be
 re-programmed but may continue to run a previously downloaded firmware.
@@ -141,95 +147,97 @@ should be used with these cards. To change the firmware on a 5i25 or 6i25 the
 "mesaflash" utility should be used (available from Mesa). It is perfectly
 valid and reasonable to load these cards with no config string at all.
 
-**num_dplls** [optional, default: -1]
+=== **num_dplls** [optional, default: -1]
 The hm2dpll is a phase-locked loop timer module which may be used to trigger
 certain types of encoder. This parameter can be used to disable the hm2dpll by
 setting the number to 0. There is only ever one module of this type, with 4 
 timer channels, so the other valid numbers are -1 (enable all) and 1, both of
-which end up meaning the same thing. 
+which end up meaning the same thing.
 
-**num_encoders** [optional, default: -1]
+=== **num_encoders** [optional, default: -1]
 Only enable the first N encoders.  If N is -1, all encoders are enabled.
 If N is 0, no encoders are enabled.  If N is greater than the number of
 encoders available in the firmware, the board will fail to register.
 
-**ssi_chan_N** [optional, default: ""]
+=== **ssi_chan_N** [optional, default: ""]
 Specifies how the bit stream from a Synchronous Serial Interface device will be
 interpreted. There should be an entry for each device connected. Only channels
 with a format specifier will be enabled. (as the software can not guess data
-rates and bit lengths) 
+rates and bit lengths)
 
-**biss_chan_N** [optional, default: ""]
+=== **biss_chan_N** [optional, default: ""]
 As for ssi_chan_N, but for BiSS devices
 
-**fanuc_chan_N** [optional, default: ""]
+=== **fanuc_chan_N** [optional, default: ""]
 Specifies how the bit stream from a Fanuc absolute encoder will be
 interpreted. There should be an entry for each device connected. Only channels
 with a format specifier will be enabled. (as the software can not guess data
-rates and bit lengths) 
+rates and bit lengths)
 
-**num_resolvers** [optional, default: -1]
+=== **num_resolvers** [optional, default: -1]
 Only enable the first N resolvers. If N = -1 then all resolvers are enabled.
 This module does not work with generic resolvers (unlike the encoder module
 which works with any encoder). At the time of writing the  Hostmot2 Resolver
 function only works with the Mesa 7i49 card.
 
-**num_pwmgens** [optional, default: -1]
+=== **num_pwmgens** [optional, default: -1]
 Only enable the first N pwmgens.  If N is -1, all pwmgens are enabled.
 If N is 0, no pwmgens are enabled.  If N is greater than the number of
 pwmgens available in the firmware, the board will fail to register.
 
-**num_3pwmgens** [optional, default: -1]
+=== **num_3pwmgens** [optional, default: -1]
 Only enable the first N Three-phase pwmgens.  If N is -1, all 3pwmgens
 are enabled. If N is 0, no pwmgens are enabled.  If N is greater than the
 number of pwmgens available in the firmware, the board will fail to register.
 
-**num_stepgens** [optional, default: -1]
+=== **num_stepgens** [optional, default: -1]
 Only enable the first N stepgens.  If N is -1, all stepgens are enabled.
 If N is 0, no stepgens are enabled.  If N is greater than the number of
 stepgens available in the firmware, the board will fail to register.
 
-
-**stepgen_width** [optional, default: 2]
+=== **stepgen_width** [optional, default: 2]
 Used to mask extra, unwanted, stepgen pins. Stepper drives typically require
 only two pins (step and dir) but the Hostmot2 stepgen can drive up to 8 output
 pins for specialised applications (depending on firmware). This parameter
 applies to all stepgen instances. Unused, masked pins will be available as GPIO.
 
-**sserial_port_N (N = 0 .. 3)** [optional, default: 00000000 for all ports]
+
+=== **sserial_port_N (N = 0 .. 3)** [optional, default: 00000000 for all ports]
+
 Up to 32 Smart Serial devices can be connected to a Mesa Anything IO board
 depending on the firmware used and the number of physical connections on the
 board. These are arranged in 1-4 ports of 1 to 8 channels.
- Some Smart Serial (SSLBP) cards offer more than one load-time configuration,
+
+Some Smart Serial (SSLBP) cards offer more than one load-time configuration,
 for example all inputs, or all outputs, or offering additional analogue input on
 some digital pins.
- To set the modes for port 0 use, for example **sserial_port_0=0120xxxx**
- A '0'in the string sets the corresponding port to mode 0, 1 to mode 1, and so
-on up to mode 9. An "x" in any position disables that channel and makes the
+
+To set the modes for port 0 use, for example **sserial_port_0=0120xxxx**
+A '0'in the string sets the corresponding port to mode 0, 1 to mode 1, and so
+on up to mode 9. An 'x' in any position disables that channel and makes the
 corresponding FPGA pins available as GPIO. 
- The string can be up to 8 characters long, and if it defines more
+
+The string can be up to 8 characters long, and if it defines more
 modes than there are channels on the port then the extras are ignored. Channel
 numbering is left to right so the example above would set sserial device 0.0
 to mode 0, 0.2 to mode2 and disable channels 0.4 onwards. 
- The sserial driver will auto-detect connected devices, no further configuration
+
+The sserial driver will auto-detect connected devices, no further configuration
 should be needed. Unconnected channels will default to GPIO, but the pin values
 will vary semi-randomly during boot when card-detection runs, to it is best to 
 actively disable any channel that is to be used for GPIO. 
 
-**num_bspis** [optional, default: -1]
+=== **num_bspis** [optional, default: -1]
 Only enable the first N Buffered SPI drivers. If N is -1 then all the drivers 
 are enabled. Each BSPI driver can address 16 devices.
 
-**num_leds** [optional, default: -1]
+=== **num_leds** [optional, default: -1]
 Only enable the first N of the LEDs on the FPGA board. If N is -1, then HAL
 pins for all the LEDs will be created. If N=0 then no pins will be added.
 
-**enable_raw** [optional]
+=== **enable_raw** [optional]
 If specified, this turns on a raw access mode, whereby a user can peek and
 poke the firmware from HAL.  See Raw Mode below.
-
-.RE
-
 
 == dpll
 The hm2dpll module has pins like "hm2___<BoardType>__.__<BoardNum>__.dpll"
@@ -245,6 +253,9 @@ as fresh as possible.
 Pins:
 
 (float, in) hm2___<BoardType>__.__<BoardNum>__.dpll.NN.timer-us
+
+[indent=4]
+====
 This pin sets the triggering offset of the associated timer. There are 4 timers
 numbered 01 to 04, represented by the NN digits in the pin name. 
 The units are micro-seconds. Negative numbers indicate that the trigger should
@@ -255,38 +266,58 @@ until the over-run error bit in the encoder goes false.
 The default value is set to 100uS, enough time for approximately 50 bits to be
 transmitted at 500kHz. For very critical systems it may be worth reducing this 
 until errors appear, and for very long bit-length or slow encoders it will need
-to be increased. 
-
+to be increased.
+====
 
 (float, in) hm2___<BoardType>__.__<BoardNum>__.dpll.base-freq-khz
+
+[indent=4]
+====
 This pin sets the base frequency of the phase-locked loop. by default it will 
 be set to the nominal frequency of the thread in which the PLL is running and
-wil not normally need to be changed. 
+wil not normally need to be changed.
+====
 
 (float, out) hm2___<BoardType>__.__<BoardNum>__.dpll.phase-error-us
+
+[indent=4]
+====
 Indicates the phase eror of the DPLL. If the number cycles by a large amount 
 it is likely that the PLL has failed to achieve lock and adjustments will need
-to be made. 
+to be made.
+====
 
 (u32, in) hm2___<BoardType>__.__<BoardNum>__.dpll.time-const"
+
+[indent=4]
+====
 The filter time-constant for the PLL. Default 40960 (0xA000)
+====
 
 (u32, in) hm2___<BoardType>__.__<BoardNum>__.dpll.plimit"
+
+[indent=4]
+====
 Sets the phase adjustment limit of the PLL. If the value is zero then the PLL
 will free-run at the base frequency independent of the servo thread rate. This
-is probably not what you want. Default 4194304 (0x400000) Units not known...
+is probably not what you want. Default 4194304 (0x400000) Units not known
+====
 
 (u32, out) hm2___<BoardType>__.__<BoardNum>__.dpll.ddsize
-Used internally by the driver, likely to disappear. 
+
+[indent=4]
+====
+Used internally by the driver, likely to disappear.
+====
 
 (u32, in)  hm2___<BoardType>__.__<BoardNum>__.dpll.prescale
+
+[indent=4]
+====
 Prescale factor for the rate generator. Default 1. 
-
-
-
+====
 
 == encoder
-
 Encoders have names like "hm2___<BoardType>__.__<BoardNum>__.encoder.__<Instance>__".
 "Instance" is a two-digit number that corresponds to the HostMot2 encoder
 instance number.  There are 'num_encoders' instances, starting with 00.
@@ -307,78 +338,113 @@ following pins and parameters:
 
 Pins:
 
-
 (s32 out) count
-Number of encoder counts since the previous reset.
 
+[indent=4]
+====
+Number of encoder counts since the previous reset.
+====
 
 (float out) position
-Encoder position in position units (count / scale).
 
+[indent=4]
+====
+Encoder position in position units (count / scale).
+====
 
 (float out) velocity
-Estimated encoder velocity in position units
-per second.
 
+[indent=4]
+====
+Estimated encoder velocity in position units per second.
+====
 
 (bit in) reset
+
+[indent=4]
+====
 When this pin is TRUE, the count and position pins are
 set to 0.  (The value of the velocity pin is not affected by this.)
 The driver does not reset this pin to FALSE after resetting the count
 to 0, that is the user's job.
-
+====
 
 (bit in/out) index-enable
-When this pin is set to True, the count
-(and therefore also position) are reset to zero on the next Index
-(Phase-Z) pulse.  At the same time, index-enable is reset to zero to
-indicate that the pulse has occurred.
 
+[indent=4]
+====
+When this pin is set to True, the count (and therefore also position) are
+reset to zero on the next Index (Phase-Z) pulse.  At the same time,
+index-enable is reset to zero to indicate that the pulse has occurred.
+====
 
 (s32 out) rawcount
-Total number of encoder counts since the start,
-not adjusted for index or reset.
+
+[indent=4]
+====
+Total number of encoder counts since the start, not adjusted for index or reset.
+====
 
 Parameters:
 
-
 (float r/w) scale
-Converts from 'count' units to 'position' units.
 
+[indent=4]
+====
+Converts from 'count' units to 'position' units.
+====
 
 (bit r/w) index-invert
+
+[indent=4]
+====
 If set to True, the rising edge of the Index
 input pin triggers the Index event (if index-enable is True).  If set
 to False, the falling edge triggers.
-
+====
 
 (bit r/w) index-mask
+
+[indent=4]
+====
 If set to True, the Index input pin only has an
 effect if the Index-Mask input pin is True (or False, depending on the
 index-mask-invert pin below).
-
+====
 
 (bit r/w) index-mask-invert
+
+[indent=4]
+====
 If set to True, Index-Mask must be False
 for Index to have an effect.  If set to False, the Index-Mask pin must
 be True.
-
+====
 
 (bit r/w) counter-mode
+
+[indent=4]
+====
 Set to False (the default) for Quadrature.
 Set to True for Step/Dir (in which case Step is on the A pin and Dir is
 on the B pin).
-
+====
 
 (bit r/w) filter
+
+[indent=4]
+====
 If set to True (the default), the quadrature counter
 needs 15 clocks to register a change on any of the three input lines
 (any pulse shorter than this is rejected as noise).  If set to False, the
 quadrature counter needs only 3 clocks to register a change.  The encoder
 sample clock runs at 33 MHz on the PCI AnyIO cards and 50 MHz on the 7i43.
-
+====
 
 (float r/w) vel-timeout
+
+[indent=4]
+====
 When the encoder is moving slower than one
 pulse for each time that the driver reads the count from the FPGA (in
 the hm2_read() function), the velocity is harder to estimate.  The driver
@@ -386,14 +452,17 @@ can wait several iterations for the next pulse to arrive, all the while
 reporting the upper bound of the encoder velocity, which can be accurately
 guessed.  This parameter specifies how long to wait for the next pulse,
 before reporting the encoder stopped.  This parameter is in seconds.
-
-
+====
 
 == Synchronous Serial Interface (SSI)
 (Not to be confused with the Smart Serial Interface)
 
 One pin is created for each SSI instance regardless of data format:
+
 (bit, in) hm2_XiXX.NN.ssi.MM.data-incomplete
+
+[indent=4]
+====
 This pin will be set "true" if the module was still transferring data when the 
 value was read. When this problem exists there will also be a limited number of 
 error messages printed to the UI. This pin should be used to monitor whether 
@@ -401,11 +470,16 @@ the problem has been addressed by config changes.
 Solutions to the problem dpend on whether the encoder read is being triggered by
 the hm2dpll phase-locked-loop timer (described above) or by the trigger-encoders
 function (described below).
+====
 
 The names of the pins created by the SSI module will depend entirely on the 
 format string for each channel specified in the loadrt command line. 
 A typical format string might be
- **ssi_chan_0=error%1bposition%24g**
+
+[example]
+====
+**ssi_chan_0=error%1bposition%24g**
+====
  
 This would interpret the LSB of the bit-stream as a bit-type pin named "error"
 and the next 24 bits as a Gray-coded encoder counter. The encoder-related HAL 
@@ -421,13 +495,28 @@ in the packet must be defined, even if they are not used. There is a limit of
 
 The valid format characters and the pins they create are:
 
-p: (Pad). Does not create any pins, used to ignore sections of the bit stream that are not required. 
+p: (Pad)
 
-b: (Boolean). 
-  (bit, out) hm2_XiXX.N.ssi.MM.<name>. If any bits in the designated field width 
+[indent=4]
+====
+Does not create any pins, used to ignore sections of the bit stream that are not required. 
+====
+
+b: (Boolean)
+
+[indent=4]
+====
+(bit, out) hm2_XiXX.N.ssi.MM.<name>
+
+If any bits in the designated field width 
 are non-zero then the HAL pin will be "true".
-  (bit, out) hm2_XiXX.N.ssi.MM.<name>-not. An inverted version of the above, the 
+
+(bit, out) hm2_XiXX.N.ssi.MM.<name>-not
+
+An inverted version of the above, the
 HAL pin will be "true" if all bits in the field are zero. 
+====
+
 
 u: (Unsigned)
   (float, out) hm2_XiXX.N.ssi.MM.<name>. The value of the bits interpeted as an
@@ -479,15 +568,12 @@ g: (Gray-code). This is a modifier that indicates that the following
 format string is gray-code encoded. This is only valid for encoders (e, h l) and 
 unsigned (u) data types.
  
-
 Parameters:
 Two parameters is universally created for all SSI instances
-
 
 (float r/w) hm2_XiXX.N.ssi.MM.frequency-khz
 This parameter sets the SSI clock frequency. The units are kHz, so 500 will give
 a clock frequency of 500,000 Hz. 
-
 
 (u32 r/w) hm2_XiXX.N.ssi.MM.timer-num
 This parameter allocates the SSI module to a specific hm2dpll timer instance.
@@ -522,9 +608,6 @@ revs. Integer divisors or multimpilers of the true PPR might be useful for
 index-homing. Non-integer factors might be appropriate where there is a 
 synchronous drive ratio between the encoder and the spindle or ballscrew. 
 
-
-
-
 == BiSS
 BiSS is a bidirectional variant of SSI. Currently only a single direction is
 supported by LinuxCNC (encoder to PC). 
@@ -548,8 +631,6 @@ although the Mesa Hostmot2 module can handle 512 bit packets. It should be
 possible to extend the number of packets supported by the driver if there is a
 requirement to do so. 
 
-
-
 == Fanuc encoder. 
 The pins and format specifier for this module are identical to the SSI module
 described above, except that at least one pre-configured format is provided. 
@@ -567,8 +648,6 @@ a Fanuc Aa64 encoder. The pins created are:
  hm2_XiXX.N.fanuc.MM.valid               Indicates that the absolute position is valid
  hm2_XiXX.N.fanuc.MM.valid-not           Inverted version
 
-
-
 == resolver
 Resolvers have names like hm2___<BoardType>__.__<BoardNum>__.resolver.__<Instance>__.
 <Instance is a 2-digit number, which for the 7i49 board will be between 00 and
@@ -580,44 +659,36 @@ usefully probed with HAL tools.
 
 Pins:
 
-
 (float, out) angle
 This pin indicates the angular position of the resolver. It
 is a number between 0 and 1 for each electrical rotation.
-
 
 (float, out) position
 Calculated from the number of complete and partial
 revolutions since startup, reset, or  index-reset multiplied by the scale
 parameter. 
 
-
 (float, out) velocity
 Calculated from the rotational velocity and the 
 velocity-scale parameter. The default scale is electrical rotations per second. 
 
-
 (s32, out) count
 This pins outputs a simulated encoder count at 2^24
 counts per rev (16777216 counts).
-
 
 (s32, out) rawcounts
 This is identical to the counts pin, except it is not
 reset by the 'index' or 'reset' pins. This is the pin which would be linked to
 the bldc HAL component if the resolver was being used to commutate a motor.
 
-
 (bit, in) reset
 Resets the position and counts pins to zero immediately.
-
 
 (bit, in/out) index-enable
 When this pin is set high the position and counts
 pins will be reset the next time the resolver passes through the zero position.
 At the same time the pin is driven low to indicate to connected modules that the
 index has been seen, and that the counters have been reset.  
-
 
 (bit, out) error
 Indicates an error in the particular channel. If this value is
@@ -629,12 +700,10 @@ Parameters:
 The position scale, in machine units per resolver
 electrical revolution. 
 
-
 (float, read/write) velocity-scale
 The conversion factor between resolver
 rotation speed and machine velocity. A value of 1 will typically give motor
 speed in rps, a value of 0.01666667 will give (approximate) RPM. 
-
 
 (u32, read/write) index-divisor (default 1)
 The resolver component emulates an index at a fixed point in the sin/cos cycle.
@@ -645,7 +714,6 @@ This parameter should be set to the number of cycles per rev of the resolver.
 CAUTION: Which pseudo-index is used will not necessarily be consistent between
 LinuxCNC runs. Do not expect to re-start a thread after restarting LinuxCNC.
 It is not appropriate to use this parameter for index-homing of axis drives.
-
 
 (float, read/write) excitation-khz
 This pin sets the excitation frequency for
@@ -658,11 +726,7 @@ The parameter will be set to the closest available of the three frequencies.
  A value of -1 (the default) indicates that the current setting should be
 retained. 
 
-
-
-
 == pwmgen
-
 pwmgens have names like "hm2___<BoardType>__.__<BoardNum>__.pwmgen.__<Instance>__".
 "Instance" is a two-digit number that corresponds to the HostMot2 pwmgen
 instance number.  There are 'num_pwmgens' instances, starting with 00.
@@ -683,25 +747,21 @@ Each pwmgen instance has the following pins and parameters:
 
 Pins:
 
-
 (bit input) enable
 If true, the pwmgen will set its Not-Enable pin
 false and output its pulses.  If 'enable' is false, pwmgen will set its
 Not-Enable pin true and not output any signals.
-
 
 (float input) value
 The current pwmgen command value, in arbitrary units.
 
 Parameters:
 
-
 (float rw) scale
 Scaling factor to convert 'value' from arbitrary units
 to duty cycle: dc = value / scale.  Duty cycle has an effective range
 of -1.0 to +1.0 inclusive, anything outside that range gets clipped.
 The default scale is 1.0.
-
 
 (s32 rw) output-type
 This emulates the output_type load-time argument to
@@ -713,7 +773,6 @@ and 4 (Direction on Out0 and PWM on Out1, "for locked antiphase").
 
 In addition to the per-instance HAL Parameters listed above, there are
 a couple of HAL Parameters that affect all the pwmgen instances:
-
 
 (u32 rw) pwm_frequency
 This specifies the PWM frequency, in Hz, of all
@@ -727,7 +786,6 @@ If the user attempts to set the frequency too high, it will be clipped
 to the max supported frequency of the board.  Frequencies below about
 5 Hz are not terribly accurate, but above 5 Hz they're pretty close.
 The default pwm_frequency is 20,000 Hz (20 kHz).
-
 
 (u32 rw) pdm_frequency
 This specifies the PDM frequency, in Hz, of
@@ -745,8 +803,6 @@ PDM frequency.  Other boards may have different clocks, resulting in
 different max PDM frequencies.  If the user attempts to set the frequency
 too high, it will be clipped to the max supported frequency of the board.
 The default pdm_frequency is 20,000 Hz (20 kHz).
-
-
 
 == 3ppwmgen
 Three-Phase PWM generators (3pwmgens) are intended for controlling the high-side
@@ -771,7 +827,6 @@ Pins:
 limited to +/- "scale". Defaults to zero which is 50% duty cycle on high-side and
 low-sidepins (but see the "deadtime" parameter)
 
-
 (bit input) enable
 When high the PWM is enabled as long as the fault bit is not
 set by the external fault input pin. When low the PWM is disabled, with both high-
@@ -779,13 +834,11 @@ side and low-side drivers low. This is not the same as 0 output (50% duty cycle 
 both sets of pins) or negative full scale (where the low side drivers are "on"
 100% of the time)
 
-
 (bit output) fault
 Indicates the status of the fault bit. This output latches high
 once set by the physical fault pin until the "enable" pin is set to high.
 
 Parameters:
-
 
 (u32 rw) deadtime
 Sets the dead-time between the high-side driver turning off and
@@ -800,18 +853,15 @@ this parameter to too low a value could be both expensive and dangerous as if bo
 gates are open at the same time there is effectively a short circuit accross the
 supply.
 
-
 (float rw) scale
 Sets the half-scale of the specified 3-phase PWM generator.
 PWM values from -scale to +scale are valid. Default is +/- 1.0
-
 
 (bit rw) fault-invert
 Sets the polarity of the fault input pin. A value of 1 means
 that a fault is triggered with the pin high, and 0 means that a fault it triggered
 when the pin is pulled low. Default 0, fault = low so that the PWM works with the
 fault pin unconnected.
-
 
 (u32 rw) sample-time
 Sets the time during the cycle when an ADC pulse
@@ -821,13 +871,9 @@ to LinuxCNC. Default 0.5.
 In addition the per-instance parameters above there is the following parameter
 that affects all instances
 
-
 (u32 rw) frequency
 Sets the master PWM frequency. Maximum is approx 48kHz, minimum
 is 1kHz. Defaults to 20kHz.
-
-
-
 
 == stepgen
 
@@ -848,33 +894,27 @@ Each stepgen instance has the following pins and parameters:
 
 Pins:
 
-
 (float input) position-cmd
 Target position of stepper motion, in
 arbitrary position units.  This pin is only used when the stepgen is in
 position control mode (control-type=0).
-
 
 (float input) velocity-cmd
 Target velocity of stepper motion, in
 arbitrary position units per second.  This pin is only used when the
 stepgen is in velocity control mode (control-type=1).
 
-
 (s32 output) counts
 Feedback position in counts (number of steps).
-
 
 (float output) position-fb
 Feedback position in arbitrary position
 units.  This is similar to "counts/position_scale", but has finer than
 step resolution.
 
-
 (float output) velocity-fb
 Feedback velocity in arbitrary position
 units per second.
-
 
 (bit input) enable
 This pin enables the step generator instance.
@@ -883,25 +923,21 @@ are generated and velocity-fb goes immediately to 0.  If the stepgen is
 moving when enable goes false it stops immediately, without obeying the
 maxaccel limit.
 
-
 (bit input) control-type
 Switches between position control mode (0)
 and velocity control mode (1).  Defaults to position control (0).
 
 Parameters:
 
-
 (float r/w) position-scale
 Converts from counts to position units.
 position = counts / position_scale
-
 
 (float r/w) maxvel
 Maximum speed, in position units per second.  If set
 to 0, the driver will always use the maximum possible velocity based
 on the current step timings and position-scale.  The max velocity will
 change if the step timings or position-scale changes.  Defaults to 0.
-
 
 (float r/w) maxaccel
 Maximum acceleration, in position units per second
@@ -911,25 +947,20 @@ pin is driven in a way that does not exceed the machine's capabilities.
 This is probably what you want if you're going to be using the LinuxCNC
 trajectory planner to jog or run G-code.
 
-
 (u32 r/w) steplen
 Duration of the step signal, in nanoseconds.
-
 
 (u32 r/w) stepspace
 Minimum interval between step signals, in
 nanoseconds.
 
-
 (u32 r/w) dirsetup
 Minimum duration of stable Direction signal before
 a step begins, in nanoseconds.
 
-
 (u32 r/w) dirhold
 Minimum duration of stable Direction signal after a
 step ends, in nanoseconds.
-
 
 (u32 r/w) step_type
 Output format, like the step_type modparam to the
@@ -958,10 +989,7 @@ the dmesg output) on the first phase of the step sequence, and table-data-4 =
 0x20000000 would set stepgen pin 6 ("Table5Pin" in the dmesg output) on the 16th
 stage of the step sequence. 
 
-
-
 == Smart Serial Interface
-
 The Smart Serial Interface allows up to 32 different devices such as the Mesa
 8i20 2.2kW 3-phase drive or 7i64 48-way IO cards to be connected to a single
 FPGA card.
@@ -970,8 +998,6 @@ Devices can be connected in any order to any active channel of an active port.
 (see the config modparam definition above).
 
 For full details of the smart-serial devices see **man sserial**.
-
-
 
 == BSPI
 The BSPI (Buffered SPI) driver is unusual in that it does not create any HAL
@@ -988,11 +1014,6 @@ The names of the available channels are printed to standard output during the
 driver loading process and take the form
 hm2_<board name>.<board index>.bspi.<index> For example hm2_5i23.0.bspi.0
 
-
-== General Purpose I/O
-
-
-
 == UART
 The UART driver also does not create any HAL pins, instead it declares two 
 simple read/write functions and a setup function to be utilised by user-written
@@ -1007,9 +1028,7 @@ The names of the available uart channels are printed to standard output during t
 driver loading process and take the form
 hm2_<board name>.<board index>uart.<index> For example hm2_5i23.0.uart.0
 
-
 == General Purpose I/O
-
 I/O pins on the board which are not used by a module instance are exported
 to HAL as "full" GPIO pins.  Full GPIO pins can be configured at run-time
 to be inputs, outputs, or open drains, and have a HAL interface that
@@ -1041,13 +1060,11 @@ HAL Pins:
 input pin.  Both full GPIO pins and IO pins used as inputs by active
 module instances have these pins.
 
-
 (bit in) out
 Value to be written (possibly inverted) to the hardware
 output pin.  Only full GPIO pins have this pin.
 
 Each GPIO can have the following Parameters:
-
 
 (bit r/w) is_output
 If set to 0, the GPIO is an input.  The IO pin
@@ -1056,7 +1073,6 @@ other devices.  The logic value on the IO pin is available in the "in" and
 "in_not" HAL pins.  Writes to the "out" HAL pin have no effect.  If this
 parameter is set to 1, the GPIO is an output; its behavior then depends
 on the "is_opendrain" parameter.  Only full GPIO pins have this parameter.
-
 
 (bit r/w) is_opendrain
 This parameter only has an effect if the
@@ -1072,7 +1088,6 @@ the resulting value on the IO pin is available on the "in" and "in_not"
 pins.  Only full GPIO pins and IO pins used as outputs by active module
 instances have this parameter.
 
-
 (bit r/w) invert_output
 This parameter only has an effect if the
 "is_output" parameter is true.  If this parameter is true, the output
@@ -1080,24 +1095,17 @@ value of the GPIO will be the inverse of the value on the "out" HAL pin.
 Only full GPIO pins and IO pins used as outputs by active module instances
 have this parameter.
 
-
-
 == led
-
 Creates HAL pins for the LEDs on the FPGA board.
 
 Pins:
-
 
 (bit in) CR<NN>
 The pins are numbered from CR01 upwards with the name
 corresponding to the PCB silkscreen. Setting the bit to "true" or 1 lights
 the led.
 
-
-
 == Watchdog
-
 The HostMot2 firmware may include a watchdog Module; if it does, the
 hostmot2 driver will use it.  The HAL representation of the watchdog is
 named "hm2_**<BoardType>**.**<BoardNum>**.watchdog".
@@ -1125,14 +1133,12 @@ be exported:
 
 Pins:
 
-
 (bit in/out) has_bit
 True if the watchdog has bit, False if the watchdog has
 not bit.  If the watchdog has bit and the has_bit bit is True, the user
 can reset it to False to resume operation.
 
 Parameters:
-
 
 (u32 read/write) timeout_ns
 Watchdog timeout, in nanoseconds.  This is
@@ -1145,9 +1151,7 @@ Functions:
 pet_watchdog(): Calling this function resets the watchdog timer
 (postponing the watchdog biting until timeout_ns nanoseconds later).
 
-
 == Raw Mode
-
 If the "enable_raw" config keyword is specified, some extra debugging
 pins are made available in HAL.  The raw mode HAL pin names begin with
 "hm2___<BoardType>__.__<BoardNum>__.raw".
@@ -1157,47 +1161,35 @@ and may dump the internal state of the hostmot2 driver to the syslog.
 
 Pins:
 
-
 (u32 in) read_address
 The bottom 16 bits of this is used as the address
 to read from.
-
 
 (u32 out) read_data
 Each time the hm2_read() function is called, this
 pin is updated with the value at .read_address.
 
-
 (u32 in) write_address
 The bottom 16 bits of this is used as the address
 to write to.
 
-
 (u32 in) write_data
 This is the value to write to .write_address.
-
 
 (bit in) write_strobe
 Each time the hm2_write() function is called, this
 pin is examined.  If it is True, then value in .write_data is written
 to the address in .write_address, and .write_strobe is set back to False.
 
-
 (bit in/out) dump_state
 This pin is normally False.  If it gets set to
 True the hostmot2 driver will write its representation of the board's
 internal state to the syslog, and set the pin back to False.
 
-
-
 == Setting up Smart Serial devices 
-
 See man setsserial for the current way to set smart-serial eeprom parameters. 
 
-
-
 == FUNCTIONS
-
 **hm2_**__<BoardType>__**.**__<BoardNum>__**.read**
 This reads the encoder counters, stepgen feedbacks, and GPIO input pins
 from the FPGA.
@@ -1237,15 +1229,10 @@ data is acceptable then the function may be placed later in the thread, allowing
 a full servo cycle for the data to be transferred from the devices. If available
 it is better to use the synchronous hm2dpll triggering function. 
 
-
-
 == SEE ALSO
-
 hm2_7i43(9)
 hm2_pci(9)
 Mesa's documentation for the Anything I/O boards, at <http://www.mesanet.com>
 
-
 == LICENSE
-
 GPL
