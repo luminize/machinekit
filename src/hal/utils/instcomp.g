@@ -1167,35 +1167,40 @@ def document(filename, outfilename):
                 lead = ".TP"
             else:
                 lead = ".TQ"
-
+        print >>f, ".HP"
+        
     doc = finddoc('see_also')
     if doc and doc[1]:
         print >>f, ".SH SEE ALSO"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
-
+        print >>f, ".HP"
+        
     doc = finddoc('notes')
     if doc and doc[1]:
         print >>f, ".SH NOTES"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
-
+        print >>f, ".HP"
+        
     doc = finddoc('author')
     if doc and doc[1]:
         print >>f, ".SH AUTHOR"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
-
+        print >>f, ".HP"
+        
     doc = finddoc('license')
     if doc and doc[1]:
-        print >>f, ".SH LICENSE"
+        print >>f, ".SH LICENCE"
         print >>f, ".HP"
         print >>f, ".HP"
         print >>f, "%s" % doc[1]
-        print >>f, ""
+        print >>f, ".HP"
+        
 
     print >>f, "( Generated from source file: %s )" % filename
     
@@ -1213,7 +1218,7 @@ def adocument(filename, outfilename):
     print >>f, "= Machinekit Documentation"
 
     print >>f, ""
-    print >>f, "[big]#HAL Component -- %s#" % (comp_name.upper())
+    print >>f, "== HAL Component -- %s" % (comp_name.upper())
     print >>f, ""
     print >>f, "=== INSTANTIABLE COMPONENTS -- General"
     print >>f, ""
@@ -1234,10 +1239,10 @@ def adocument(filename, outfilename):
         else:
             firstline = doc[2]
             rest = ''
-        print >>f, "[big]#%s -- %s#" % (doc[1], firstline)
+        print >>f, "==== %s -- %s" % (doc[1], firstline)
     else:
         rest = ''
-        print >>f, "[big]#%s#" % doc[1]
+        print >>f, "==== %s" % doc[1]
     print >>f, ""
     
     print >>f, "=== SYNOPSIS"
@@ -1314,7 +1319,8 @@ def adocument(filename, outfilename):
             else:
                 print >>f, " )"
             print >>f, ""
-            print >>f, doc
+            if doc:
+        	print >>f, doc
             print >>f, ""    
 
     print >>f, "=== PINS"
@@ -1341,7 +1347,7 @@ def adocument(filename, outfilename):
         else:
     	    print >>f, ")"
         if doc:
-    	    print >>f, doc
+	    print >>f, " - %s\n" % doc
         print >>f, ""    
 
     if instanceparams:
@@ -1353,7 +1359,7 @@ def adocument(filename, outfilename):
             if value:
                 print >>f, "(default: _%s_)" % value
             if doc:
-                print >>f, doc
+		print >>f, " - %s\n" % doc
         print >>f, ""
         
     if moduleparams:
@@ -1365,7 +1371,7 @@ def adocument(filename, outfilename):
             if value:
                 print >>f, "(default: _%s_)" % value
             if doc:
-                print >>f, doc
+                print >>f, " - %s\n" % doc
         print >>f, ""    
     
     doc = finddoc('see_also')
@@ -1391,7 +1397,7 @@ def adocument(filename, outfilename):
         
     doc = finddoc('license')
     if doc and doc[1]:
-        print >>f, "=== LICENSE"
+        print >>f, "=== LICENCE"
         print >>f, ""
         print >>f, "%s" % doc[1]
         print >>f, ""    

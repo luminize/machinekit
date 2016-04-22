@@ -1,8 +1,8 @@
 component or2 "Two-input OR gate";
 pin in bit in0;
 pin in bit in1;
-pin out bit out """
-
+pin out bit out 
+"""
 *out* is computed from the value of *in0* and *in1* according
 to the following rule:
 
@@ -12,7 +12,6 @@ to the following rule:
 Otherwise,
 
     out=TRUE
-    
 """
 ;
 function _ nofp;
