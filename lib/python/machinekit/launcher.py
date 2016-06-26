@@ -105,7 +105,7 @@ def stop_processes():
 
 
 # loads a HAL configuraton file
-def load_hal_file(filename, ini=None):
+def load_hal_file(filename, ini=None, arguments=None):
     sys.stdout.write("loading " + filename + '... ')
     sys.stdout.flush()
 
@@ -117,6 +117,10 @@ def load_hal_file(filename, ini=None):
         if ini is not None:
             from machinekit import config
             config.load_ini(ini)
+        if arguments is not None:
+            sys.stdout.write("arguments: %s" % arguments)
+            arguments.insert(0, filename)
+            sys.argv = arguments
         execfile(filename)
     else:
         command = 'halcmd'
