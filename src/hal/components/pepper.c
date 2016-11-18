@@ -120,11 +120,11 @@ typedef enum {
 } decay_type;
 
 typedef struct {
-    hal_s32_t micro_step;       /* parameter: input */
-    hal_s32_t active_current;   /* parameter: input */
-    hal_s32_t active_decay;     /* parameter: input */
-    hal_s32_t idle_current;     /* parameter: input */
-    hal_s32_t idle_decay;       /* parameter: input */
+    hal_s32_t* micro_step;              /* pin: input */
+    hal_s32_t* active_current;          /* pin: input */
+    hal_s32_t* active_decay;            /* pin: input */
+    hal_s32_t* idle_current;            /* pin: input */
+    hal_s32_t* idle_decay;              /* pin: input */
 } axis_config_t;
 
 typedef struct {
@@ -134,9 +134,9 @@ typedef struct {
     hal_bit_t* enable_sck;              /* pin: output */
     hal_bit_t* spindle_mosi;            /* pin: output */
 
-    hal_bit_t no_store;                 /* parameter: input */
-    hal_s32_t cycle_time;               /* parameter: input */
-    hal_s32_t num_axes;                 /* parameter: output */
+    hal_bit_t* no_store;                 /* pin: input */
+    hal_s32_t* cycle_time;               /* pin: input */
+    hal_s32_t  num_axes;                 /* param: output */
 
     axis_config_t (*axis_config)[];
 } hal_pepper_t;
@@ -440,17 +440,17 @@ static int pepper_export( hal_pepper_t* addr, const char* prefix)
         return retval;
     }
 
-    retval = hal_param_bit_newf( HAL_RW, &(addr->no_store), comp_id, "%s.no-store", prefix);
+    retval = hal_pin_bit_newf( HAL_IN, &(addr->no_store), comp_id, "%s.no-store", prefix);
     if (retval != 0) {
         return retval;
     }
-    addr->no_store = 1;
+    *(addr->no_store) = 1;
 
-    retval = hal_param_s32_newf( HAL_RW, &(addr->cycle_time), comp_id, "%s.cycle-time", prefix);
+    retval = hal_pin_s32_newf( HAL_IN, &(addr->cycle_time), comp_id, "%s.cycle-time", prefix);
     if (retval != 0) {
         return retval;
     }
-    addr->cycle_time = 0;       // unknown value
+    *(addr->cycle_time) = 0;       // unknown value
 
     retval = hal_param_s32_newf( HAL_RO, &(addr->num_axes), comp_id, "%s.num_axes", prefix);
     if (retval != 0) {
@@ -464,41 +464,41 @@ static int pepper_export( hal_pepper_t* addr, const char* prefix)
 
         rtapi_snprintf( buf, sizeof( buf), "%s.axis.%d", prefix, i);
 
-        retval = hal_param_s32_newf( HAL_RW, &(aci->micro_step),
+        retval = hal_pin_s32_newf( HAL_IN, &(aci->micro_step),
                                 comp_id, "%s.micro-step", buf);
         if (retval != 0) {
             return retval;
         }
 
-        retval = hal_param_s32_newf( HAL_RW, &(aci->active_current),
+        retval = hal_pin_s32_newf( HAL_IN, &(aci->active_current),
                                 comp_id, "%s.active-current", buf);
         if (retval != 0) {
             return retval;
         }
 
-        retval = hal_param_s32_newf( HAL_RW, &(aci->active_decay),
+        retval = hal_pin_s32_newf( HAL_IN, &(aci->active_decay),
                                 comp_id, "%s.active-decay", buf);
         if (retval != 0) {
             return retval;
         }
 
-        retval = hal_param_s32_newf( HAL_RW, &(aci->idle_current),
+        retval = hal_pin_s32_newf( HAL_IN, &(aci->idle_current),
                                 comp_id, "%s.idle-current", buf);
         if (retval != 0) {
             return retval;
         }
 
-        retval = hal_param_s32_newf( HAL_RW, &(aci->idle_decay),
+        retval = hal_pin_s32_newf( HAL_IN, &(aci->idle_decay),
                                 comp_id, "%s.idle-decay", buf);
         if (retval != 0) {
             return retval;
         }
 
-        aci->micro_step     = 8;        // 1:8 microstep
-        aci->active_current = 6;        // 0.6 A peak current
-        aci->active_decay   = 1;        // fast decay
-        aci->idle_current   = 3;        // 0.3 A hold current
-        aci->idle_decay     = 1;        // fast decay
+        *(aci->micro_step)     = 8;        // 1:8 microstep
+        *(aci->active_current) = 6;        // 0.6 A peak current
+        *(aci->active_decay)   = 1;        // fast decay
+        *(aci->idle_current)   = 3;        // 0.3 A hold current
+        *(aci->idle_decay)     = 1;        // fast decay
     }
 
     /* export processing function */
@@ -599,14 +599,14 @@ static int pepper_spi_prepare( hal_pepper_t* data, int board_nr)
     cfg.header.revision = 0;
     cfg.header.command  = 0xc0;
     cfg.check    = 0;
-    cfg.no_store = data->no_store;
+    cfg.no_store = *(data->no_store);
     cfg.address  = board_nr + 1;
     // set stepper driver mode select fields
-    cfg.ms.x = get_mode_bits( (*data->axis_config)[ board_nr * NR_AXES + 0].micro_step);
-    cfg.ms.y = get_mode_bits( (*data->axis_config)[ board_nr * NR_AXES + 1].micro_step);
-    cfg.ms.z = get_mode_bits( (*data->axis_config)[ board_nr * NR_AXES + 2].micro_step);
-    cfg.ms.a = get_mode_bits( (*data->axis_config)[ board_nr * NR_AXES + 3].micro_step);
-    cfg.ms.b = get_mode_bits( (*data->axis_config)[ board_nr * NR_AXES + 4].micro_step);
+    cfg.ms.x = get_mode_bits( *(*data->axis_config)[ board_nr * NR_AXES + 0].micro_step);
+    cfg.ms.y = get_mode_bits( *(*data->axis_config)[ board_nr * NR_AXES + 1].micro_step);
+    cfg.ms.z = get_mode_bits( *(*data->axis_config)[ board_nr * NR_AXES + 2].micro_step);
+    cfg.ms.a = get_mode_bits( *(*data->axis_config)[ board_nr * NR_AXES + 3].micro_step);
+    cfg.ms.b = get_mode_bits( *(*data->axis_config)[ board_nr * NR_AXES + 4].micro_step);
     // set all enable state registers
     int i, j;
     for (j = 0 ; j < 4 ; ++j) { // all four enable states
@@ -624,19 +624,19 @@ static int pepper_spi_prepare( hal_pepper_t* data, int board_nr)
             case 4: ers = &es->b; break;
             }
             if (j == 0) {       // enable mode 0
-                unsigned int hold_current = daci->idle_current;
+                unsigned int hold_current = *(daci->idle_current);
                 if (hold_current > 0) {
                     ers->pwm = hold_current;
                     ers->ena = 1;
                 } else {
-                    ers->pwm = daci->active_current;
+		    ers->pwm = *(daci->active_current);
                     ers->ena = 0;
                 }
-                ers->decay = daci->idle_decay;
+                ers->decay = *(daci->idle_decay);
             } else {            // enable modes 1,2&3
-                ers->pwm = daci->active_current;
+	        ers->pwm = *(daci->active_current);
                 ers->ena = 1;
-                ers->decay = daci->active_decay;
+                ers->decay = *(daci->active_decay);
             }
         }
     }
