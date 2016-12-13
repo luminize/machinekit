@@ -5,7 +5,7 @@
 #include "hal_priv.h"
 #include "hal_ring.h"
 
-#include <machinetalk/generated/jplan.npb.h>
+#include <machinetalk/build/machinetalk/protobuf/jplan.npb.h>
 #include <machinetalk/nanopb/pb_decode.h>
 
 MODULE_AUTHOR("Michael Haberler");

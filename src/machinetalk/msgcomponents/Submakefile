@@ -10,7 +10,6 @@ RTFLAGS +=   $(PROTO_NANOPB_CFLAGS)
 obj-m += pbmsgs.o
 pbmsgs-objs := \
 	$(MSGCOMP_DIR)/pbmsgs.o	\
-<<<<<<< HEAD
 	$(PBGEN)/$(NAMESPACEDIR)/canon.npb.o \
 	$(PBGEN)/$(NAMESPACEDIR)/emcclass.npb.o \
 	$(PBGEN)/$(NAMESPACEDIR)/log.npb.o \
@@ -30,8 +29,6 @@ pbmsgs-objs := \
 	$(PBGEN)/$(NAMESPACEDIR)/ros.npb.o \
 	$(PBGEN)/$(NAMESPACEDIR)/value.npb.o
 
-obj-m += ringload.o
-ringload-objs := $(MSGCOMP_DIR)/ringload.o
 
 obj-m += pbring.o
 pbring-objs := $(MSGCOMP_DIR)/pbring.o

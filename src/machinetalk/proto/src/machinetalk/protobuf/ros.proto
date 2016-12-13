@@ -3,7 +3,7 @@ package pb;  // this should probably better be ros or pb:ros;
 // see README.msgid
 // msgid base: 370
 
-import "nanopb.proto";
+import "machinetalk/protobuf/nanopb.proto";
 
 // http://docs.ros.org/jade/api/std_msgs/html/msg/Header.html
 message Time {

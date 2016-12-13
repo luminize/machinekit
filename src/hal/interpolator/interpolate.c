@@ -5,7 +5,7 @@
 #include "hal_priv.h"
 #include "hal_ring.h"
 
-#include <machinetalk/generated/ros.npb.h>
+#include <machinetalk/build/machinetalk/protobuf/ros.npb.h>
 #include <machinetalk/nanopb/pb_decode.h>
 
 MODULE_AUTHOR("Michael Haberler");

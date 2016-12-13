@@ -1777,7 +1777,6 @@ $(RTLIBDIR)/tp$(MODULE_EXT): $(addprefix $(OBJDIR)/,$(tp-objs))
 $(RTLIBDIR)/ufdemo$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(ufdemo-objs))
 $(RTLIBDIR)/icomp$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(icomp-objs))
 $(RTLIBDIR)/lutn-demo$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(lutn-demo-objs))
-$(RTLIBDIR)/lutn$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(lutn-objs))
 $(RTLIBDIR)/jplan$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(jplan-objs))
 $(RTLIBDIR)/interpolate$(MODULE_EXT):	$(addprefix $(OBJDIR)/,$(interpolate-objs))
 

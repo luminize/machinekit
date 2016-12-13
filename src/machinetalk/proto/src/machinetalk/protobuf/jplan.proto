@@ -3,7 +3,7 @@ package pb;
 // see README.msgid
 // msgid base: 350
 
-import "nanopb.proto";
+import "machinetalk/protobuf/nanopb.proto";
 
 
 message JplanJoint {
