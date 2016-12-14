@@ -2,7 +2,7 @@ import os, time
 import random
 
 from   machinekit import hal
-from   ros_pb2 import *
+from   machinetalk.protobuf.ros_pb2 import *
 import google.protobuf.text_format
 
 name = "ip.traj"

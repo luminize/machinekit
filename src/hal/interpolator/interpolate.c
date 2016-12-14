@@ -223,10 +223,10 @@ static int update(void *arg, const hal_funct_args_t *fa)
 }
 
 
-static int instantiate_interpolate(const char *name,
-				   const int argc,
+static int instantiate_interpolate(const int argc,
 				   const char**argv)
 {
+  const char *name = argv[1];
     struct inst_data *ip;
     int inst_id, i;
 
@@ -320,7 +320,7 @@ static int delete_interpolate(const char *name, void *inst, const int inst_size)
 int rtapi_app_main(void)
 {
     comp_id = hal_xinit(TYPE_RT, 0, 0,
-			instantiate_interpolate,
+			(hal_constructor_t)instantiate_interpolate,
 			delete_interpolate,
 			compname);
     if (comp_id < 0)
