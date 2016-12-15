@@ -73,6 +73,17 @@ PB_DESCRIPTOR(LogMessage);
 /* PB_DESCRIPTOR(Test1); */
 /* PB_DESCRIPTOR(Test2); */
 /* PB_DESCRIPTOR(Test3); */
+//jplan messages
+PB_DESCRIPTOR(JplanJoint);
+PB_DESCRIPTOR(JplanCommand);
+
+//ros isomorphic messages
+PB_DESCRIPTOR(JointTrajectoryPoint);
+PB_DESCRIPTOR(JointTrajectory);
+PB_DESCRIPTOR(Header);
+PB_DESCRIPTOR(Time);
+
+
 
 //jplan messages
 PB_DESCRIPTOR(JplanJoint);
