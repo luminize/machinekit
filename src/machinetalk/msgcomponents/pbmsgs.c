@@ -83,20 +83,6 @@ PB_DESCRIPTOR(JointTrajectory);
 PB_DESCRIPTOR(Header);
 PB_DESCRIPTOR(Time);
 
-
-
-//jplan messages
-PB_DESCRIPTOR(JplanJoint);
-PB_DESCRIPTOR(JplanCommand);
-
-//ros isomorphic messages
-PB_DESCRIPTOR(JointTrajectoryPoint);
-PB_DESCRIPTOR(JointTrajectory);
-PB_DESCRIPTOR(Header);
-PB_DESCRIPTOR(Time);
-
-
-
 // this likely supersedes the above exports, as it
 // contains a superset of pb_<message>_fields
 msginfo_t msginfo[] = {
