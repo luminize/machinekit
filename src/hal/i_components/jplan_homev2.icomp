@@ -1,0 +1,55 @@
+component jplan_homev2 """
+Home offset component whose offset changes on a pulse.
+Can be used for homing puropses together with the jplan planner.
+""";
+description """
+This component wired together with the jplan component (pin driven)
+regulates simple positioning and homing of a joint.
+
+Values of pos-cmd are calculated on a change of the pin. Otherwise setting
+a new offset when the homing is triggered will immediately have the jplan
+component start moving.
+
+When home-pulse is triggered (rising edge) the internal offset will be
+calculated between offset_pos_fb and set-home-pos value.
+
+When enable is high, the pos-cmd value will be offset and results in the
+offset-pos-cmd value.
+
+The internal offset of this component is set by a high edge of the
+home-pulse pin and mirrored exposed as the offset pin:
+
+""";
+pin_ptr in float pos_cmd = 0 "Input position.";
+pin_ptr in float set_home = 0 "Position required at home-pulse edge.";
+pin_ptr out float offset_pos_cmd = 0 "Offset position, input for jplan.pos-cmd.";
+pin_ptr in float offset_pos_fb = 0 "Input feedback of position, output of jplan.curr-pos.";
+
+pin_ptr in bit home_pulse = 0 "Homing switch input.";
+pin_ptr out float offset = 0 "Current offset value.";
+
+variable hal_bit_t prev_home_pulse = false;
+variable hal_float_t offset_intern = false;
+variable hal_float_t prev_pos_cmd = false;
+
+function _;
+
+license "GPL";
+author "Bas de Bruijn";
+;;
+
+FUNCTION(_)
+{
+    // detect rising edge of home-pulse
+    if ((gb(home_pulse) && !prev_home_pulse) && (gb(home_pulse) == 1)) {
+        offset_intern = gf(offset_pos_fb) - gf(set_home);
+    }
+    // detect change of position, only then calculate new position
+    if ((gf(pos_cmd) != prev_pos_cmd)) {
+        sf(offset_pos_cmd, gf(pos_cmd) + offset_intern);
+    }
+    sf(offset, offset_intern);
+    prev_home_pulse = gb(home_pulse);
+    prev_pos_cmd = gf(pos_cmd); 
+    return 0;
+}
