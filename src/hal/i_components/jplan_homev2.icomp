@@ -21,7 +21,7 @@ home-pulse pin and mirrored exposed as the offset pin:
 
 """;
 pin_ptr in float pos_cmd = 0 "Input position.";
-pin_ptr in float set_home = 0 "Position required at home-pulse edge.";
+pin_ptr in float home_pos = 0 "Position required at home-pulse edge.";
 pin_ptr out float offset_pos_cmd = 0 "Offset position, input for jplan.pos-cmd.";
 pin_ptr in float offset_pos_fb = 0 "Input feedback of position, output of jplan.curr-pos.";
 
@@ -42,7 +42,7 @@ FUNCTION(_)
 {
     // detect rising edge of home-pulse
     if ((gb(home_pulse) && !prev_home_pulse) && (gb(home_pulse) == 1)) {
-        offset_intern = gf(offset_pos_fb) - gf(set_home);
+        offset_intern = gf(offset_pos_fb) - gf(home_pos);
     }
     // detect change of position, only then calculate new position
     if ((gf(pos_cmd) != prev_pos_cmd)) {
