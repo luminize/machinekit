@@ -7,11 +7,12 @@ This component can be connected to a Frequency Inverter for use with
 for example an indexing table.
 
 Internally there is a small state machine with the following states:
-0 = disabled
-1 = inactive
-2 = start index table
-3 = moving
-4 = home indextable
+
+- 0 = disabled
+- 1 = inactive
+- 2 = start index table
+- 3 = moving
+- 4 = home indextable
 
 The state is disabled by default, and setting the `enable` pin will
 put the state machine tin the `inactive` state.
@@ -27,10 +28,11 @@ and setting the current position `index-fb` to the target value of
 
 When there is a combination of `pulse=inc`, `pulse-dec`, `home` and
 `start` the order of precedence is as follows:
-1 : start
-2 : home
-3 : pulse-dec
-4 : pulse-inc
+
+- 1 : start
+- 2 : home
+- 3 : pulse-dec
+- 4 : pulse-inc
 """;
 pin_ptr in s32 index_cmd = 0 "Desired position of the indexing device";
 pin_ptr in bit index_switch = false "Switch rising edge counts up/down";        
@@ -41,12 +43,16 @@ pin_ptr out s32 index_fb = false "Current index of the table";
 pin_ptr in bit pulse_inc = false "Pulse for moving indextable to next lower position";
 pin_ptr in bit pulse_dec = false "Pulse for moving indextable to next higher position";
 pin_ptr out bit drive_on = false "Needs to be connected to a drive";
+pin_ptr in u32 drive_on_delay = 0 "Delay for drive to start, time for brake to unlock";
 pin_ptr out bit drive_dir = false "Needs to be connected to a drive";
 pin_ptr out bit drive_brake = false "Needs to be connected to a drive";
+pin_ptr in u32 drive_brake_delay = 0 "Delay for brake to become inactive after stop of drive";
 pin_ptr out bit active = false "When the component is active (driving) then this pin is high";
 pin_ptr out u32 component_state "Mirror of internal state machine."; 
 variable hal_s32_t index_curr = 0;
 variable hal_s32_t index_target = 0;
+variable hal_s32_t drive_delay = 0;
+variable hal_s32_t brake_delay = 0;
 variable hal_bit_t indextable_active = false;
 variable hal_bit_t prev_start = false;
 variable hal_bit_t prev_set_home = false;
@@ -70,6 +76,9 @@ author "Bas de Bruijn";
 FUNCTION(_)
 {
     hal_s32_t pos_difference;
+    // increase timers
+    drive_delay ++;
+    brake_delay ++;
     // check inputs
     if (gb(enable) == 0) {
         // set pins for drive, direction, brake and active low
@@ -89,24 +98,46 @@ FUNCTION(_)
                 // detect rising edge pulse-inc pin, increase current target and start moving
                 if ((gb(pulse_inc) && !prev_pulse_inc) && (gb(pulse_inc) == 1)) {
                     index_target = index_curr + 1;
-                    state = 2;
+                    if (gu(drive_on_delay) == 0) {
+                        state = 4;
+                    }
+                    else {
+                        drive_delay = 0;
+                        state = 2;
+                    }
                 }
                 // detect rising edge pulse-dec pin, decrease current target and start moving
                 if ((gb(pulse_dec) && !prev_pulse_dec) && (gb(pulse_dec) == 1)) {
                     index_target = index_curr - 1;
-                    state = 2;
+                    if (gu(drive_on_delay) == 0) {
+                        state = 4;
+                    }
+                    else {
+                        drive_delay = 0;
+                        state = 2;
+                    }
                 }
                 // detect home pin rising edge
                 if ((gb(set_home) && !prev_set_home) && (gb(set_home) == 1)) {
-                    state = 4;
+                    state = 6;
                 }
                 // detect rising edge start pin, save target and start moving
                 if ((gb(start) && !prev_start) && (gb(start) == 1)) {
                     index_target = gs(index_cmd);
-                    state = 2;
+                    if (gu(drive_on_delay) == 0){
+                        state = 4;
+                    }
+                    else {
+                        drive_delay = 0;
+                        state = 2;
+                    }
                 }
                 break;
-            case 2: // start moving index table
+            case 2: // wait for lock to disengage before running
+                if (drive_delay > gu(drive_on_delay));
+                    state = 3;
+                break;
+            case 3: // start moving index table
                 // if desired position not equals current position, then move
                 pos_difference = (index_target - index_curr);
                 if (pos_difference == 0) {
@@ -123,10 +154,10 @@ FUNCTION(_)
                     sb(drive_brake, false);
                     sb(drive_on, true);
                     indextable_active = true;
-                    state = 3;
+                    state = 4;
                 }
                 break;
-            case 3: // index table is moving
+            case 4: // index table is moving
                 // detect rising edge index_switch
                 if ((gb(index_switch) && !prev_index_switch) && (gb(index_switch) == 1)) {
                     if (direction == 1) {
@@ -139,13 +170,24 @@ FUNCTION(_)
                         // position has been reached
                         // stop and go to next state
                         sb(drive_on, false);
-                        sb(drive_brake, true);
-                        indextable_active = false;
-                        state = 1;
+                        if (gu(drive_brake_delay) == 0) {
+                            indextable_active = false;
+                            state = 1;
+                        }
+                        else {
+                            brake_delay = 0;
+                            state = 5;
+                        }
                     }
                 }
                 break;
-            case 4: // set index table current position to commanded position w/o moving
+            case 5: // wait for motor to stop before engaging lock
+                if (brake_delay > gu(drive_brake_delay));
+                    sb(drive_brake, true);
+                    indextable_active = false;
+                    state = 1;
+                break;
+            case 6: // set index table current position to commanded position w/o moving
                 index_curr = gs(index_cmd);
                 state = 1;
                 break;
