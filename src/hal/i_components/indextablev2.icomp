@@ -10,9 +10,12 @@ Internally there is a small state machine with the following states:
 
 - 0 = disabled
 - 1 = inactive
-- 2 = start index table
-- 3 = moving
-- 4 = home indextable
+- 2 = set drive on delay timer if applicable
+- 3 = wait on drive-on-delay timer if applicable
+- 4 = start index table
+- 5 = moving, wait for index-switch signal
+- 6 = wait on drive-brake-delay if applicable
+- 7 = home indextable
 
 The state is disabled by default, and setting the `enable` pin will
 put the state machine tin the `inactive` state.
@@ -119,7 +122,7 @@ FUNCTION(_)
                 }
                 // detect home pin rising edge
                 if ((gb(set_home) && !prev_set_home) && (gb(set_home) == 1)) {
-                    state = 6;
+                    state = 7;
                 }
                 // detect rising edge start pin, save target and start moving
                 if ((gb(start) && !prev_start) && (gb(start) == 1)) {
@@ -133,11 +136,23 @@ FUNCTION(_)
                     }
                 }
                 break;
-            case 2: // wait for lock to disengage before running
-                if (drive_delay > gu(drive_on_delay));
+            case 2: // set timer if drive-on-delay > 0
+                sb(drive_brake, false);
+                if (gu(drive_on_delay) == 0) {
+                    state = 4;
+                }
+                else {
+                    // set internal variable
+                    drive_delay = 2; // 2 because the state machine needs 2 periods
                     state = 3;
+                }
                 break;
-            case 3: // start moving index table
+            case 3: // set delay to wait for lock to disengage before running
+                if (drive_delay > gu(drive_on_delay)) {
+                    state = 4;
+                }
+                break;
+            case 4: // start moving index table
                 // if desired position not equals current position, then move
                 pos_difference = (index_target - index_curr);
                 if (pos_difference == 0) {
@@ -151,13 +166,12 @@ FUNCTION(_)
                         direction = 0;
                     }
                     sb(drive_dir, direction);
-                    sb(drive_brake, false);
                     sb(drive_on, true);
                     indextable_active = true;
-                    state = 4;
+                    state = 5;
                 }
                 break;
-            case 4: // index table is moving
+            case 5: // index table is moving
                 // detect rising edge index_switch
                 if ((gb(index_switch) && !prev_index_switch) && (gb(index_switch) == 1)) {
                     if (direction == 1) {
@@ -175,19 +189,20 @@ FUNCTION(_)
                             state = 1;
                         }
                         else {
-                            brake_delay = 0;
-                            state = 5;
+                            brake_delay = 1; // because state machine takes 1 cycle
+                            state = 6;
                         }
                     }
                 }
                 break;
-            case 5: // wait for motor to stop before engaging lock
-                if (brake_delay > gu(drive_brake_delay));
+            case 6: // wait for motor to stop before engaging lock
+                if (brake_delay > gu(drive_brake_delay)) {
                     sb(drive_brake, true);
                     indextable_active = false;
                     state = 1;
+                }
                 break;
-            case 6: // set index table current position to commanded position w/o moving
+            case 7: // set index table current position to commanded position w/o moving
                 index_curr = gs(index_cmd);
                 state = 1;
                 break;
