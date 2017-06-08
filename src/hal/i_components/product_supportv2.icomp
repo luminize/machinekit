@@ -1,0 +1,167 @@
+component product_supportv2 """
+Driving actuators for supporting/clamping a product, and retracting when
+the product needs to be rotated/moved. Timers are used for retraction
+and extension time.
+""";
+description """
+- when start rises, timer_down is reset.
+- lock-on deactivates
+- activate actuator-down, it retracts thus support is removed
+- wait until retract_timer is reached
+- de-activate actuator-down
+- start next proces step by making next-start high
+- wait until rising edge on next-done
+- set timer_up
+- activate actuator-up
+- wait until timer_up is reached
+- lock-on activates
+- set tool-ready bit
+- wait on falling edge of start-in
+- reset tool-ready bit
+""";
+
+// out pins
+pin_ptr out bit next_start = false "starts a next component";
+pin_ptr out bit tool_ready = false "when the state machine has finished, this pin will rise, and waits on the start pin to fall, after which this one falls";
+pin_ptr out bit act_up = false "command pin for actuator upwards direction";
+pin_ptr out bit act_down = false "command pin for actuator downwards direction";
+pin_ptr out u32 component_state = 0 "debug pin for internal component state";
+pin_ptr out bit lock_on = false "command pin for lock";
+pin_ptr out bit active = false "When the component is active (driving) then this pin is high";
+
+// in pins
+pin_ptr in bit enable = false "enable pin, when low, all outputs are zero";
+pin_ptr in bit start = false "start pin, rising edge triggers";
+pin_ptr in bit next_done = false "when next step is done, this comp continues";
+pin_ptr in u32 act_up_delay = false "upwards delay in cycles";
+pin_ptr in u32 act_down_delay = false "downwards delay in cycles";
+
+
+// timer variables
+variable hal_s32_t actuator_down_timer = 0;
+variable hal_s32_t actuator_up_timer = 0;
+
+// edge detection variables
+variable hal_bit_t prev_start = false;
+variable hal_bit_t prev_next_done = false;
+
+// state machine
+variable hal_u32_t state = 0;
+
+function _;
+
+license "GPL";
+author "Bas de Bruijn";
+;;
+
+FUNCTION(_)
+{
+    hal_bit_t l_enable;
+    hal_bit_t l_start;
+    hal_bit_t l_next_done;
+    hal_u32_t l_act_up_delay;
+    hal_u32_t l_act_down_delay;
+    
+    // read inputs
+    l_enable = gb(enable);
+    l_start = gb(start);
+    l_next_done = gb(next_done);
+    l_act_up_delay = gu(act_up_delay);
+    l_act_down_delay = gu(act_down_delay);
+    
+    // increase timers
+    actuator_down_timer ++;
+    actuator_up_timer ++;
+    
+    // check enable input
+    if (!l_enable) {
+        sb(next_start, false);
+        sb( tool_ready, false);
+        sb(act_up, false);
+        sb(act_down, false);
+        sb(active, false);
+        state = 0;
+    }
+    else {
+        switch (state){
+            case 0: // disabled
+                if (l_enable) state = 1; // go to enable state
+                break;
+            case 1: // inactive state
+                // detect rising edge start pin
+                if (l_start && !prev_start) {
+                    state = 2;
+                    sb(active, false);
+                }
+                break;
+            case 2: // reset timer, release lock, activate actuator-down
+                if (l_act_down_delay == 0) {
+                    state = 4;
+                }
+                else {
+                    // set internal variable
+                    actuator_down_timer = 2; // 2 because the state machine needs 2 periods
+                    state = 3;
+                }
+                sb(active, false);
+                sb(lock_on, false);
+                sb(act_down, true);
+                break;
+            case 3: // wait for actuator down timer
+                if (actuator_down_timer > l_act_down_delay) {
+                    state = 4;
+                }
+                break;
+            case 4: // actuator has moved down, timer finished, deactivate
+                    // the downwards actuator (5/3 or 5/3 valve)
+                    // start the next step
+                sb(act_down, false);
+                sb(next_start, true);
+                state = 5;
+                break;
+            case 5: // next step is moving, wait for finishing by
+                    // detecting rising edge next_done
+                if (l_next_done && !prev_next_done) {
+                    sb(next_start, false);
+                    state = 6;
+                }
+                break;
+            case 6: // reset timer, activate actuator up
+                if (l_act_up_delay == 0) {
+                    state = 8;
+                }
+                else {
+                    // set internal variable
+                    actuator_up_timer = 2; // 2 because the state machine needs 2 periods
+                    state = 7;
+                }
+                sb(act_up, true);
+                break;
+            case 7: // wait for actuator-up timer
+                if (actuator_up_timer > l_act_down_delay) {
+                    state = 8;
+                }
+                break;
+            case 8: // actuator has moved up, timer finished, deactivate
+                    // the upwards actuator (5/3 or 5/3 valve)
+                    // set tool-ready bit
+                sb(act_up, false);
+                sb(tool_ready, true);
+                sb(lock_on, true);
+                state = 9;
+                break;
+            case 9: // wait on falling edge of start, handshake mechanism
+                sb(tool_ready, false);
+                state = 1;
+            default: 
+                break;
+        }
+        // set pins for other states than not-enable state
+    }
+    // set state pin
+    su(component_state, state);
+    // remember these for edge detection
+    prev_start = l_start;
+    prev_next_done = l_next_done;
+    return 0;
+}
