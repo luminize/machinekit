@@ -1,5 +1,5 @@
-component muxn_floatv2 "Select from one of N input values, U32";
-pin_ptr in s32 sel = 0 "Selection pin";
+component muxn_floatv2 "Select from one of N input values";
+pin_ptr in u32 sel = 0 "Selection pin";
 pin_ptr out float out "Follows the value of `in<N>` whereas N is the value of \
 the 'sel' input. If `sel` is not in the range of available inputs then the \
 output is set to 0.";
@@ -15,13 +15,13 @@ author "Bas de Bruijn";
 ;;
 FUNCTION(_)
 {
-    if ((gs(sel) >= 0) && (gs(sel) < local_pincount))
+    if ((gu(sel) >= 0) && (gu(sel) < local_pincount))
     {
-        sf(out, gf(in_(gs(sel))));
+        sf(out, gf(in_(gu(sel))));
     }
     else
     {
-        sf(out,  0u);
+        sf(out, 0);
     }
     return 0;
 }
