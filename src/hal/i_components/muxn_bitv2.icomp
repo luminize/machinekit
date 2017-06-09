@@ -1,0 +1,27 @@
+component muxn_bitv2 "Select from one of N input values";
+pin_ptr in u32 sel = 0 "Selection pin";
+pin_ptr out bit out "Follows the value of `in<N>` whereas N is the value of \
+the 'sel' input. If `sel` is not in the range of available inputs then the \
+output is set to 0.";
+pin_ptr in bit in#.[pincount] "input pins";
+
+instanceparam int pincount = 2;
+
+option MAXCOUNT 100;
+
+function _;
+license "GPL";
+author "Bas de Bruijn";
+;;
+FUNCTION(_)
+{
+    if ((gu(sel) >= 0) && (gu(sel) < local_pincount))
+    {
+        sb(out, gb(in_(gu(sel))));
+    }
+    else
+    {
+        sb(out, 0);
+    }
+    return 0;
+}
