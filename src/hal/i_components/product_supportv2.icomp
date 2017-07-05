@@ -18,6 +18,10 @@ description """
 - set tool-ready bit
 - wait on falling edge of start-in
 - reset tool-ready bit
+
+manual actions from idle state:
+- lower support
+- raise support
 """;
 
 // out pins
@@ -35,6 +39,8 @@ pin_ptr in bit start = false "start pin, rising edge triggers";
 pin_ptr in bit next_done = false "when next step is done, this comp continues";
 pin_ptr in u32 act_up_delay = false "upwards delay in cycles";
 pin_ptr in u32 act_down_delay = false "downwards delay in cycles";
+pin_ptr in bit act_raise = false "manually raise support";
+pin_ptr in bit act_lower = false "manually lower support";
 
 
 // timer variables
@@ -44,6 +50,8 @@ variable hal_s32_t actuator_up_timer = 0;
 // edge detection variables
 variable hal_bit_t prev_start = false;
 variable hal_bit_t prev_next_done = false;
+variable hal_bit_t prev_act_lower= false;
+variable hal_bit_t prev_act_raise = false;
 
 // state machine
 variable hal_u32_t state = 0;
@@ -59,6 +67,8 @@ FUNCTION(_)
     hal_bit_t l_enable;
     hal_bit_t l_start;
     hal_bit_t l_next_done;
+    hal_bit_t l_act_lower;
+    hal_bit_t l_act_raise;
     hal_u32_t l_act_up_delay;
     hal_u32_t l_act_down_delay;
     
@@ -68,7 +78,8 @@ FUNCTION(_)
     l_next_done = gb(next_done);
     l_act_up_delay = gu(act_up_delay);
     l_act_down_delay = gu(act_down_delay);
-    
+    l_act_lower = gb(act_lower);
+    l_act_raise = gb(act_raise);
     // increase timers
     actuator_down_timer ++;
     actuator_up_timer ++;
@@ -89,9 +100,15 @@ FUNCTION(_)
                 break;
             case 1: // inactive state
                 // detect rising edge start pin
+                sb(active, false);
                 if (l_start && !prev_start) {
                     state = 2;
-                    sb(active, false);
+                }
+                if (l_act_lower && !prev_act_lower) {
+                    state = 10;
+                }
+                if (l_act_raise && !prev_act_raise) {
+                    state = 11;
                 }
                 break;
             case 2: // reset timer, release lock, activate actuator-down
@@ -103,7 +120,7 @@ FUNCTION(_)
                     actuator_down_timer = 2; // 2 because the state machine needs 2 periods
                     state = 3;
                 }
-                sb(active, false);
+                sb(active, true);
                 sb(lock_on, false);
                 sb(act_down, true);
                 break;
@@ -153,6 +170,53 @@ FUNCTION(_)
             case 9: // wait on falling edge of start, handshake mechanism
                 sb(tool_ready, false);
                 state = 1;
+                break;
+            case 10: // reset timer, release lock, activate actuator-down
+                if (l_act_down_delay == 0) {
+                    state = 13;
+                }
+                else {
+                    // set internal variable
+                    actuator_down_timer = 2; // 2 because the state machine needs 2 periods
+                    state = 12;
+                }
+                sb(active, true);
+                sb(lock_on, false);
+                sb(act_down, true);
+                break;
+            case 11:
+                if (l_act_up_delay == 0) {
+                    state = 15;
+                }
+                else {
+                    // set internal variable
+                    actuator_up_timer = 2; // 2 because the state machine needs 2 periods
+                    state = 14;
+                }
+                sb(active, true);
+                sb(lock_on, false);
+                sb(act_up, true);
+                break;
+            case 12:
+                if (actuator_down_timer > l_act_down_delay) {
+                    state = 13;
+                }
+                break;
+            case 13:
+                sb(act_down, false);
+                sb(lock_on, true);
+                state = 1;
+                break;
+            case 14:
+                if (actuator_up_timer > l_act_up_delay) {
+                    state = 15;
+                }
+                break;
+            case 15:
+                sb(act_up, false);
+                sb(lock_on, true);
+                state = 1;
+                break;
             default: 
                 break;
         }
@@ -163,5 +227,7 @@ FUNCTION(_)
     // remember these for edge detection
     prev_start = l_start;
     prev_next_done = l_next_done;
+    prev_act_lower = l_act_lower;
+    prev_act_raise = l_act_raise;
     return 0;
 }
