@@ -107,6 +107,7 @@ FUNCTION(_)
                 if (l_enable == 1) state = 1; // go to enable state
                 break;
             case 1: // inactive state
+                indextable_active = false;
                 // detect rising edge pulse-inc pin, increase current target and start moving
                 if (l_pulse_inc && !prev_pulse_inc) {
                     index_target = index_curr + 1;
@@ -146,6 +147,7 @@ FUNCTION(_)
                 }
                 break;
             case 2: // set timer if drive-on-delay > 0
+                indextable_active = true;
                 sb(drive_brake, false);
                 if (l_drive_on_delay == 0) {
                     state = 4;
@@ -162,6 +164,7 @@ FUNCTION(_)
                 }
                 break;
             case 4: // start moving index table
+                indextable_active = true;
                 // if desired position not equals current position, then move
                 pos_difference = (index_target - index_curr);
                 if (pos_difference == 0) {
@@ -176,7 +179,6 @@ FUNCTION(_)
                     }
                     sb(drive_dir, direction);
                     sb(drive_on, true);
-                    indextable_active = true;
                     state = 5;
                 }
                 break;
