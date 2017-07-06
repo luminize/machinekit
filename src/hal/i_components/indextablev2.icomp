@@ -79,11 +79,20 @@ author "Bas de Bruijn";
 FUNCTION(_)
 {
     hal_s32_t pos_difference;
+    hal_bit_t l_enable = gb(enable);
+    hal_bit_t l_start = gb(start);
+    hal_bit_t l_pulse_inc = gb(pulse_inc);
+    hal_u32_t l_drive_on_delay = gu(drive_on_delay);
+    hal_bit_t l_pulse_dec = gb(pulse_dec);
+    hal_bit_t l_set_home = gb(set_home);
+    hal_bit_t l_index_switch = gb(index_switch);
+    hal_s32_t l_index_cmd = gs(index_cmd);
+    hal_u32_t l_drive_brake_delay = gu(drive_brake_delay);
     // increase timers
     drive_delay ++;
     brake_delay ++;
     // check inputs
-    if (gb(enable) == 0) {
+    if (l_enable == 0) {
         // set pins for drive, direction, brake and active low
         // direct stop
         sb(drive_on, false);
@@ -95,13 +104,13 @@ FUNCTION(_)
     else {
         switch (state){
             case 0: // disabled
-                if (gb(enable) == 1) state = 1; // go to enable state
+                if (l_enable == 1) state = 1; // go to enable state
                 break;
             case 1: // inactive state
                 // detect rising edge pulse-inc pin, increase current target and start moving
-                if ((gb(pulse_inc) && !prev_pulse_inc) && (gb(pulse_inc) == 1)) {
+                if (l_pulse_inc && !prev_pulse_inc) {
                     index_target = index_curr + 1;
-                    if (gu(drive_on_delay) == 0) {
+                    if (l_drive_on_delay == 0) {
                         state = 4;
                     }
                     else {
@@ -110,9 +119,9 @@ FUNCTION(_)
                     }
                 }
                 // detect rising edge pulse-dec pin, decrease current target and start moving
-                if ((gb(pulse_dec) && !prev_pulse_dec) && (gb(pulse_dec) == 1)) {
+                if (l_pulse_dec && !prev_pulse_dec) {
                     index_target = index_curr - 1;
-                    if (gu(drive_on_delay) == 0) {
+                    if (l_drive_on_delay == 0) {
                         state = 4;
                     }
                     else {
@@ -121,13 +130,13 @@ FUNCTION(_)
                     }
                 }
                 // detect home pin rising edge
-                if ((gb(set_home) && !prev_set_home) && (gb(set_home) == 1)) {
+                if (l_set_home && !prev_set_home) {
                     state = 7;
                 }
                 // detect rising edge start pin, save target and start moving
-                if ((gb(start) && !prev_start) && (gb(start) == 1)) {
-                    index_target = gs(index_cmd);
-                    if (gu(drive_on_delay) == 0){
+                if (l_start && !prev_start) {
+                    index_target = l_index_cmd;
+                    if (l_drive_on_delay == 0){
                         state = 4;
                     }
                     else {
@@ -138,7 +147,7 @@ FUNCTION(_)
                 break;
             case 2: // set timer if drive-on-delay > 0
                 sb(drive_brake, false);
-                if (gu(drive_on_delay) == 0) {
+                if (l_drive_on_delay == 0) {
                     state = 4;
                 }
                 else {
@@ -148,7 +157,7 @@ FUNCTION(_)
                 }
                 break;
             case 3: // set delay to wait for lock to disengage before running
-                if (drive_delay > gu(drive_on_delay)) {
+                if (drive_delay > l_drive_on_delay) {
                     state = 4;
                 }
                 break;
@@ -173,7 +182,7 @@ FUNCTION(_)
                 break;
             case 5: // index table is moving
                 // detect rising edge index_switch
-                if ((gb(index_switch) && !prev_index_switch) && (gb(index_switch) == 1)) {
+                if (l_index_switch && !prev_index_switch) {
                     if (direction == 1) {
                         index_curr ++;
                     }
@@ -184,7 +193,7 @@ FUNCTION(_)
                         // position has been reached
                         // stop and go to next state
                         sb(drive_on, false);
-                        if (gu(drive_brake_delay) == 0) {
+                        if (l_drive_brake_delay == 0) {
                             indextable_active = false;
                             state = 1;
                         }
@@ -196,14 +205,14 @@ FUNCTION(_)
                 }
                 break;
             case 6: // wait for motor to stop before engaging lock
-                if (brake_delay > gu(drive_brake_delay)) {
+                if (brake_delay > l_drive_brake_delay) {
                     sb(drive_brake, true);
                     indextable_active = false;
                     state = 1;
                 }
                 break;
             case 7: // set index table current position to commanded position w/o moving
-                index_curr = gs(index_cmd);
+                index_curr = l_index_cmd;
                 state = 1;
                 break;
             default: 
@@ -211,11 +220,11 @@ FUNCTION(_)
         }
     }
     // store state of start and home input for edge detection
-    prev_start = gb(start);
-    prev_pulse_inc = gb(pulse_inc);
-    prev_pulse_dec = gb(pulse_dec);
-    prev_set_home = gb(set_home);
-    prev_index_switch = gb(index_switch);
+    prev_start = l_start;
+    prev_pulse_inc = l_pulse_inc;
+    prev_pulse_dec = l_pulse_dec;
+    prev_set_home = l_set_home;
+    prev_index_switch = l_index_switch;
     // output current index to index-fb
     ss(index_fb, index_curr);
     // set state pin
